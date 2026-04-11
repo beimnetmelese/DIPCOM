@@ -6,7 +6,6 @@ import {
   Clock3,
   Search,
   Trash2,
-  Truck,
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
