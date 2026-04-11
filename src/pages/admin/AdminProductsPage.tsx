@@ -188,8 +188,8 @@ export function AdminProductsPage() {
         ))}
       </div>
 
-      <div className="mt-4 overflow-auto rounded-3xl border border-orange-100">
-        <table className="min-w-full bg-white text-sm">
+      <div className="mt-4 overflow-x-auto rounded-3xl border border-orange-100">
+        <table className="min-w-[760px] bg-white text-sm sm:min-w-full">
           <thead className="bg-orange-50 text-left text-slate-700">
             <tr>
               <th className="px-4 py-3">Photo</th>

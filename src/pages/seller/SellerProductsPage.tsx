@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Filter, Search, Sparkles } from "lucide-react";
+import { Filter, PhoneCall, Search, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
-import { ProductFilters } from "../../types.ts";
+import { Product, ProductFilters } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
 const initialFilters: ProductFilters = {
@@ -19,6 +20,15 @@ const initialFilters: ProductFilters = {
 export function SellerProductsPage() {
   const { products, reserveProduct, commissionPercent } = useAppContext();
   const [filters, setFilters] = useState<ProductFilters>(initialFilters);
+  const [reserveTarget, setReserveTarget] = useState<Product | null>(null);
+  const [reserveQuantityInput, setReserveQuantityInput] = useState("1");
+  const [reserveError, setReserveError] = useState("");
+  const [deliveryNotice, setDeliveryNotice] = useState<{
+    productName: string;
+    quantity: number;
+  } | null>(null);
+
+  const deliveryPhoneNumber = "+1 (555) 900-1001";
 
   const brands = useMemo(
     () => [...new Set(products.map((product) => product.brand))],
@@ -72,6 +82,46 @@ export function SellerProductsPage() {
   const lowStockCount = products.filter(
     (product) => product.stock > 0 && product.stock <= 3,
   ).length;
+
+  const openReserveModal = (product: Product) => {
+    setReserveTarget(product);
+    setReserveQuantityInput("1");
+    setReserveError("");
+  };
+
+  const closeReserveModal = () => {
+    setReserveTarget(null);
+    setReserveError("");
+  };
+
+  const submitReservation = () => {
+    if (!reserveTarget) {
+      return;
+    }
+
+    const parsedQuantity = Number(reserveQuantityInput);
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+      setReserveError("Quantity must be at least 1.");
+      return;
+    }
+
+    if (parsedQuantity > reserveTarget.stock) {
+      setReserveError("Quantity cannot be greater than available stock.");
+      return;
+    }
+
+    const result = reserveProduct(reserveTarget.id, parsedQuantity);
+    if (!result.ok) {
+      setReserveError(result.message);
+      return;
+    }
+
+    setDeliveryNotice({
+      productName: reserveTarget.name,
+      quantity: parsedQuantity,
+    });
+    closeReserveModal();
+  };
 
   return (
     <AnimatedPage>
@@ -269,7 +319,7 @@ export function SellerProductsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => reserveProduct(product.id, 1)}
+                onClick={() => openReserveModal(product)}
                 disabled={product.stock === 0}
                 className="mt-4 w-full rounded-2xl bg-slate-950 px-3 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
@@ -279,6 +329,132 @@ export function SellerProductsPage() {
           );
         })}
       </section>
+
+      <Modal
+        open={Boolean(reserveTarget)}
+        title={reserveTarget ? `Reserve ${reserveTarget.name}` : "Reserve item"}
+        onClose={closeReserveModal}
+      >
+        {reserveTarget ? (
+          <div>
+            <p className="text-sm text-slate-600">
+              How many units do you want to reserve?
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-800">
+              Available stock: {reserveTarget.stock}
+            </p>
+            <div className="mt-4 grid gap-2">
+              <label
+                htmlFor="reserve-quantity"
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
+              >
+                Quantity
+              </label>
+              <input
+                id="reserve-quantity"
+                type="number"
+                min={1}
+                max={reserveTarget.stock}
+                value={reserveQuantityInput}
+                onChange={(event) => {
+                  if (!reserveTarget) {
+                    return;
+                  }
+                  setReserveError("");
+                  const nextValue = event.target.value;
+
+                  if (nextValue === "") {
+                    setReserveQuantityInput("");
+                    return;
+                  }
+
+                  const parsed = Number(nextValue);
+                  if (Number.isNaN(parsed)) {
+                    return;
+                  }
+
+                  if (parsed > reserveTarget.stock) {
+                    setReserveQuantityInput(String(reserveTarget.stock));
+                    return;
+                  }
+
+                  setReserveQuantityInput(nextValue);
+                }}
+                onFocus={(event) => event.currentTarget.select()}
+                onBlur={() => {
+                  if (!reserveTarget) {
+                    return;
+                  }
+                  const parsed = Number(reserveQuantityInput);
+                  if (!Number.isInteger(parsed) || parsed < 1) {
+                    setReserveQuantityInput("1");
+                    return;
+                  }
+                  if (parsed > reserveTarget.stock) {
+                    setReserveQuantityInput(String(reserveTarget.stock));
+                  }
+                }}
+                className="w-full rounded-2xl border border-orange-200 px-3 py-2 text-sm outline-none"
+              />
+            </div>
+            {reserveError ? (
+              <p className="mt-3 text-sm font-semibold text-rose-600">
+                {reserveError}
+              </p>
+            ) : null}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={submitReservation}
+                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Reserve
+              </button>
+              <button
+                type="button"
+                onClick={closeReserveModal}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(deliveryNotice)}
+        title="Reserved"
+        onClose={() => setDeliveryNotice(null)}
+      >
+        {deliveryNotice ? (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-700">
+              Reserved {deliveryNotice.quantity} item(s) of
+              <span className="font-semibold text-slate-900">
+                {` ${deliveryNotice.productName}`}
+              </span>
+              .
+            </p>
+            <p className="text-sm text-slate-700">
+              Reserved successfully. Call this number to start the delivery.
+            </p>
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-semibold text-slate-900">
+              <PhoneCall className="h-4 w-4 text-orange-700" />
+              {deliveryPhoneNumber}
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => setDeliveryNotice(null)}
+                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </AnimatedPage>
   );
 }

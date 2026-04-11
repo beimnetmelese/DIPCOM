@@ -13,7 +13,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 px-4"
+          className="fixed inset-0 z-40 flex items-end justify-center overflow-y-auto bg-slate-900/45 px-3 py-3 sm:items-center sm:px-4 sm:py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -24,7 +24,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.24 }}
-            className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-soft"
+            className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-4 shadow-soft sm:max-h-[calc(100vh-4rem)] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">

@@ -49,7 +49,7 @@ const galleryPhotos = [
 export function AboutPage() {
   return (
     <AnimatedPage>
-      <section className="relative left-1/2 -mt-20 w-screen -translate-x-1/2 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft">
+      <section className="relative -mx-3 -mt-20 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft sm:-mx-4 lg:-mx-6">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1800&q=80"

@@ -21,12 +21,12 @@ export function PublicNavbar() {
 
   return (
     <header className="fixed left-0 top-0 z-40 w-full border-b border-orange-100 bg-white/90 backdrop-blur">
-      <div className="flex w-full items-center justify-between px-3 py-4 sm:px-4 lg:px-6">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="flex w-full items-center justify-between gap-2 px-3 py-4 sm:px-4 lg:px-6">
+        <Link to="/" className="flex min-w-0 items-center gap-2">
           <span className="rounded-xl bg-orange-500 p-2 text-white">
             <PackageCheck className="h-5 w-5" />
           </span>
-          <span className="font-heading text-lg font-bold text-slate-900">
+          <span className="max-w-[170px] truncate font-heading text-sm font-bold text-slate-900 sm:max-w-none sm:text-lg">
             DIPCOM Technologies
           </span>
         </Link>

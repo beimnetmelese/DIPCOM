@@ -23,12 +23,14 @@ body {
   min-height: 100vh;
   background: #ffffff;
   color: #111827;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
   background: #ffffff;
+  overflow-x: clip;
 }
 
 ::-webkit-scrollbar {
