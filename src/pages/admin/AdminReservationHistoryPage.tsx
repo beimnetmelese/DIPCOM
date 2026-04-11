@@ -486,7 +486,7 @@ export function AdminReservationHistoryPage() {
               <h3 className="mt-2 font-heading text-xl font-semibold text-slate-900">
                 {seller.sellerName}
               </h3>
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-white p-3 text-center">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Orders
