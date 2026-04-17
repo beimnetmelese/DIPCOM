@@ -163,7 +163,7 @@ export function SellerProductsPage() {
         </div>
         <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Commission rate
+            Discount rate
           </p>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
             {commissionPercent}%

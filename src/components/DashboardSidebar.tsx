@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 interface SidebarProps {
-  role: "admin" | "seller";
+  role: "admin" | "seller" | "staff";
 }
 
 export function DashboardSidebar({ role }: SidebarProps) {
@@ -70,13 +70,40 @@ export function DashboardSidebar({ role }: SidebarProps) {
       label: "My Reservations",
       icon: <Clock3 className="h-4 w-4" />,
     },
+    {
+      to: "/seller/stock",
+      label: "My Stock",
+      icon: <Boxes className="h-4 w-4" />,
+    },
   ];
 
-  const links = role === "admin" ? adminLinks : sellerLinks;
+  const staffLinks = [
+    {
+      to: "/staff/products",
+      label: "Products",
+      icon: <Store className="h-4 w-4" />,
+    },
+    {
+      to: "/staff/reservations",
+      label: "Accept Reservations",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+  ];
+
+  const links =
+    role === "admin"
+      ? adminLinks
+      : role === "seller"
+        ? sellerLinks
+        : staffLinks;
   const activeLinkLabel = useMemo(
     () =>
       links.find((item) => {
-        if (item.to === "/admin" || item.to === "/seller") {
+        if (
+          item.to === "/admin" ||
+          item.to === "/seller" ||
+          item.to === "/staff"
+        ) {
           return location.pathname === item.to;
         }
         return location.pathname.startsWith(item.to);
@@ -117,7 +144,11 @@ export function DashboardSidebar({ role }: SidebarProps) {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === "/admin" || item.to === "/seller"}
+                end={
+                  item.to === "/admin" ||
+                  item.to === "/seller" ||
+                  item.to === "/staff"
+                }
                 className={({ isActive }) =>
                   `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                     isActive
@@ -143,7 +174,11 @@ export function DashboardSidebar({ role }: SidebarProps) {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === "/admin" || item.to === "/seller"}
+              end={
+                item.to === "/admin" ||
+                item.to === "/seller" ||
+                item.to === "/staff"
+              }
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   isActive

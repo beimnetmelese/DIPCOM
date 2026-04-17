@@ -1,4 +1,4 @@
-import { Product, Reservation, Seller } from '../types.ts'
+import { Product, Reservation, Seller, SellerProduct } from '../types.ts'
 
 export const initialProducts: Product[] = [
   { id: 'p1', name: 'HP LaserJet Pro M404dn', price: 450, stock: 18, brand: 'HP', category: 'Printers', imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-10' },
@@ -111,5 +111,52 @@ export const initialReservations: Reservation[] = [
     status: 'delivered',
     createdAt: '2026-04-08T10:25:00.000Z',
     deliveredAt: '2026-04-09T08:45:00.000Z',
+  },
+]
+
+export const initialSellerProducts: SellerProduct[] = [
+  {
+    id: 'sp1',
+    sellerId: 's1',
+    name: 'Core Label Tape Pack',
+    price: 38,
+    stock: 42,
+    brand: 'Core Retail Hub',
+    category: 'Accessories',
+    imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
+    createdAt: '2026-03-04',
+  },
+  {
+    id: 'sp2',
+    sellerId: 's1',
+    name: 'Office Ink Multi Kit',
+    price: 112,
+    stock: 8,
+    brand: 'Core Retail Hub',
+    category: 'Accessories',
+    imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80',
+    createdAt: '2026-03-20',
+  },
+  {
+    id: 'sp3',
+    sellerId: 's1',
+    name: 'Compact Receipt Printer',
+    price: 178,
+    stock: 3,
+    brand: 'Core Retail Hub',
+    category: 'Printers',
+    imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80',
+    createdAt: '2026-04-06',
+  },
+  {
+    id: 'sp4',
+    sellerId: 's2',
+    name: 'Al Noor Barcode Stickers',
+    price: 46,
+    stock: 18,
+    brand: 'Al Noor Supplies',
+    category: 'Accessories',
+    imageUrl: 'https://images.unsplash.com/photo-1516542076529-1ea3854896c4?auto=format&fit=crop&w=900&q=80',
+    createdAt: '2026-03-25',
   },
 ]

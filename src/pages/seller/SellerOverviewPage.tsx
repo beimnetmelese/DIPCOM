@@ -12,13 +12,12 @@ import {
 } from "chart.js";
 import { useMemo } from "react";
 import {
+  AlertTriangle,
   Boxes,
-  CheckCircle2,
-  ClipboardList,
+  ChartColumn,
+  CircleDollarSign,
   Package,
   TrendingUp,
-  WalletCards,
-  XCircle,
 } from "lucide-react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
@@ -39,45 +38,28 @@ ChartJS.register(
 );
 
 export function SellerOverviewPage() {
-  const { currentUser, products, reservations } = useAppContext();
-  const myReservations = useMemo(
+  const { currentUser, sellerProducts } = useAppContext();
+
+  const myProducts = useMemo(
     () =>
-      reservations.filter(
-        (reservation) => reservation.sellerId === currentUser?.id,
-      ),
-    [currentUser?.id, reservations],
+      sellerProducts.filter((product) => product.sellerId === currentUser?.id),
+    [currentUser?.id, sellerProducts],
   );
 
-  const activeReservations = myReservations.filter(
-    (reservation) => reservation.status === "active",
-  );
-  const deliveredReservations = myReservations.filter(
-    (reservation) => reservation.status === "delivered",
-  );
-  const removedReservations = myReservations.filter(
-    (reservation) => reservation.status === "removed",
-  );
-
-  const totalSpent = myReservations.reduce(
-    (sum, item) => sum + item.finalTotal,
+  const totalUnits = myProducts.reduce((sum, item) => sum + item.stock, 0);
+  const inventoryValue = myProducts.reduce(
+    (sum, item) => sum + item.price * item.stock,
     0,
   );
-  const discountedValue = myReservations.reduce(
-    (sum, item) => sum + (item.baseTotal - item.finalTotal),
-    0,
-  );
-
-  const totalUnits = myReservations.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
-  const averageOrderValue =
-    myReservations.length > 0 ? totalSpent / myReservations.length : 0;
-  const lowStockProducts = products.filter(
+  const averageUnitValue = totalUnits > 0 ? inventoryValue / totalUnits : 0;
+  const lowStockProducts = myProducts.filter(
     (product) => product.stock > 0 && product.stock <= 3,
   ).length;
+  const outOfStockProducts = myProducts.filter(
+    (product) => product.stock === 0,
+  ).length;
 
-  const monthlyTrend = useMemo(() => {
+  const monthlyAddedTrend = useMemo(() => {
     const monthFormatter = new Intl.DateTimeFormat("en", { month: "short" });
     const now = new Date();
     const labels: string[] = [];
@@ -91,29 +73,39 @@ export function SellerOverviewPage() {
       );
     }
 
-    const totals = monthKeys.map((key) =>
-      myReservations
-        .filter((reservation) => {
-          const date = new Date(reservation.createdAt);
-          const reservationKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-          return reservationKey === key;
-        })
-        .reduce((sum, reservation) => sum + reservation.finalTotal, 0),
+    const counts = monthKeys.map(
+      (key) =>
+        myProducts.filter((product) => {
+          const date = new Date(product.createdAt);
+          const productKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          return productKey === key;
+        }).length,
     );
 
-    return { labels, totals };
-  }, [myReservations]);
+    return { labels, counts };
+  }, [myProducts]);
 
-  const topReservedProducts = useMemo(() => {
+  const topStockedProducts = useMemo(() => {
     const grouped = new Map<string, number>();
 
-    myReservations.forEach((reservation) => {
-      const current = grouped.get(reservation.productName) ?? 0;
-      grouped.set(reservation.productName, current + reservation.quantity);
+    myProducts.forEach((product) => {
+      const current = grouped.get(product.name) ?? 0;
+      grouped.set(product.name, current + product.stock);
     });
 
     return [...grouped.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  }, [myReservations]);
+  }, [myProducts]);
+
+  const categorySplit = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    myProducts.forEach((product) => {
+      const current = grouped.get(product.category) ?? 0;
+      grouped.set(product.category, current + 1);
+    });
+
+    return [...grouped.entries()];
+  }, [myProducts]);
 
   return (
     <AnimatedPage>
@@ -125,12 +117,12 @@ export function SellerOverviewPage() {
               <TrendingUp className="h-4 w-4" /> Seller dashboard
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Track your reservation performance with a complete visual
+              Track your stock performance with a complete visual inventory
               dashboard.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-              Monitor statuses, monthly trends, product demand, and order value
-              to make smarter stock decisions as a seller.
+              Monitor inventory value, stock health, monthly additions, and
+              category distribution for your own stock list.
             </p>
           </div>
         </div>
@@ -138,28 +130,28 @@ export function SellerOverviewPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Available Products"
-          value={String(products.filter((product) => product.stock > 0).length)}
-          note="Ready to reserve"
+          title="My Products"
+          value={String(myProducts.length)}
+          note="Items in your stock list"
           icon={<Package className="h-5 w-5" />}
         />
         <StatCard
-          title="Active Queue"
-          value={String(activeReservations.length)}
-          note="Pending confirmation"
-          icon={<ClipboardList className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Discount Captured"
-          value={currency(discountedValue)}
-          note={`Total spent ${currency(totalSpent)}`}
-          icon={<WalletCards className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Avg Order Value"
-          value={currency(averageOrderValue)}
-          note={`${totalUnits} total units reserved`}
+          title="Total Units"
+          value={String(totalUnits)}
+          note="All units currently in stock"
           icon={<Boxes className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Inventory Value"
+          value={currency(inventoryValue)}
+          note="Estimated based on unit prices"
+          icon={<CircleDollarSign className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Avg Unit Value"
+          value={currency(averageUnitValue)}
+          note="Average value per stocked unit"
+          icon={<ChartColumn className="h-5 w-5" />}
         />
       </div>
 
@@ -167,39 +159,39 @@ export function SellerOverviewPage() {
         <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Delivered
+              Healthy Stock
             </p>
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            <Package className="h-5 w-5 text-emerald-600" />
           </div>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
-            {deliveredReservations.length}
+            {myProducts.filter((product) => product.stock > 3).length}
           </p>
-          <p className="mt-1 text-sm text-slate-500">Completed reservations</p>
-        </article>
-        <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Removed
-            </p>
-            <XCircle className="h-5 w-5 text-rose-600" />
-          </div>
-          <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
-            {removedReservations.length}
-          </p>
-          <p className="mt-1 text-sm text-slate-500">Archived reservations</p>
+          <p className="mt-1 text-sm text-slate-500">Well-stocked products</p>
         </article>
         <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               Low Stock Alerts
             </p>
-            <Package className="h-5 w-5 text-amber-600" />
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
           </div>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
             {lowStockProducts}
           </p>
+          <p className="mt-1 text-sm text-slate-500">Need refill soon</p>
+        </article>
+        <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Out Of Stock
+            </p>
+            <Package className="h-5 w-5 text-rose-600" />
+          </div>
+          <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
+            {outOfStockProducts}
+          </p>
           <p className="mt-1 text-sm text-slate-500">
-            Products need refill soon
+            Immediate restock required
           </p>
         </article>
       </div>
@@ -207,15 +199,15 @@ export function SellerOverviewPage() {
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
         <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <p className="mb-4 text-sm font-semibold text-slate-700">
-            6-month reservation value trend
+            6-month product additions trend
           </p>
           <Line
             data={{
-              labels: monthlyTrend.labels,
+              labels: monthlyAddedTrend.labels,
               datasets: [
                 {
-                  label: "Final reservation value",
-                  data: monthlyTrend.totals,
+                  label: "Products added",
+                  data: monthlyAddedTrend.counts,
                   borderColor: "#f97316",
                   backgroundColor: "rgba(249, 115, 22, 0.18)",
                   fill: true,
@@ -236,40 +228,46 @@ export function SellerOverviewPage() {
 
         <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <p className="mb-4 text-sm font-semibold text-slate-700">
-            Reservation status split
+            Category split in my stock
           </p>
           <div className="mx-auto max-w-[330px]">
             <Doughnut
               data={{
-                labels: ["Active", "Delivered", "Removed"],
+                labels: categorySplit.map((item) => item[0]),
                 datasets: [
                   {
-                    data: [
-                      activeReservations.length,
-                      deliveredReservations.length,
-                      removedReservations.length,
+                    data: categorySplit.map((item) => item[1]),
+                    backgroundColor: [
+                      "#f59e0b",
+                      "#10b981",
+                      "#f43f5e",
+                      "#3b82f6",
                     ],
-                    backgroundColor: ["#f59e0b", "#10b981", "#f43f5e"],
                     borderWidth: 0,
                   },
                 ],
               }}
             />
           </div>
+          {categorySplit.length === 0 ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-slate-500">
+              No product categories yet. Add products in your stock page.
+            </p>
+          ) : null}
         </article>
       </div>
 
       <article className="mt-6 rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
         <p className="mb-4 text-sm font-semibold text-slate-700">
-          Top reserved products by quantity
+          Top stocked products by quantity
         </p>
         <Bar
           data={{
-            labels: topReservedProducts.map((item) => item[0]),
+            labels: topStockedProducts.map((item) => item[0]),
             datasets: [
               {
-                label: "Units reserved",
-                data: topReservedProducts.map((item) => item[1]),
+                label: "Units in stock",
+                data: topStockedProducts.map((item) => item[1]),
                 backgroundColor: [
                   "#fb923c",
                   "#f97316",
@@ -289,10 +287,9 @@ export function SellerOverviewPage() {
             },
           }}
         />
-        {topReservedProducts.length === 0 ? (
+        {topStockedProducts.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-slate-500">
-            No reservation data yet. Reserve products to start seeing demand
-            analytics.
+            No stock data yet. Add products to start seeing inventory analytics.
           </p>
         ) : null}
       </article>

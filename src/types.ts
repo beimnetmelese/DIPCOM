@@ -1,5 +1,5 @@
 export type SellerStatus = 'approved' | 'pending' | 'rejected'
-export type UserRole = 'admin' | 'seller'
+export type UserRole = 'admin' | 'seller' | 'staff'
 
 export interface Product {
   id: string
@@ -10,6 +10,10 @@ export interface Product {
   category: string
   imageUrl?: string
   createdAt: string
+}
+
+export interface SellerProduct extends Product {
+  sellerId: string
 }
 
 export interface Seller {

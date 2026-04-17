@@ -19,12 +19,13 @@ import { ShopPage } from "./pages/public/ShopPage.tsx";
 import { SellerOverviewPage } from "./pages/seller/SellerOverviewPage.tsx";
 import { SellerProductsPage } from "./pages/seller/SellerProductsPage.tsx";
 import { SellerReservationsPage } from "./pages/seller/SellerReservationsPage.tsx";
+import { SellerStockPage } from "./pages/seller/SellerStockPage.tsx";
 
 function ProtectedRoute({
-  allowedRole,
+  allowedRoles,
   children,
 }: {
-  allowedRole: "admin" | "seller";
+  allowedRoles: Array<"admin" | "seller" | "staff">;
   children: ReactNode;
 }) {
   const { currentUser } = useAppContext();
@@ -33,10 +34,16 @@ function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (currentUser.role !== allowedRole) {
+  if (!allowedRoles.includes(currentUser.role)) {
     return (
       <Navigate
-        to={currentUser.role === "admin" ? "/admin" : "/seller"}
+        to={
+          currentUser.role === "admin"
+            ? "/admin"
+            : currentUser.role === "staff"
+              ? "/staff/products"
+              : "/seller"
+        }
         replace
       />
     );
@@ -61,7 +68,7 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRole="admin">
+            <ProtectedRoute allowedRoles={["admin"]}>
               <DashboardLayout role="admin" />
             </ProtectedRoute>
           }
@@ -77,7 +84,7 @@ function App() {
         <Route
           path="/seller"
           element={
-            <ProtectedRoute allowedRole="seller">
+            <ProtectedRoute allowedRoles={["seller"]}>
               <DashboardLayout role="seller" />
             </ProtectedRoute>
           }
@@ -85,6 +92,20 @@ function App() {
           <Route index element={<SellerOverviewPage />} />
           <Route path="products" element={<SellerProductsPage />} />
           <Route path="reservations" element={<SellerReservationsPage />} />
+          <Route path="stock" element={<SellerStockPage />} />
+        </Route>
+
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute allowedRoles={["staff"]}>
+              <DashboardLayout role="staff" />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="reservations" element={<AdminReservationsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

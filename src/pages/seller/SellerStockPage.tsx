@@ -1,9 +1,9 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
-import { AlertTriangle, Download, ImagePlus, Search, Plus } from "lucide-react";
+import { AlertTriangle, ImagePlus, Plus, Search } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
-import { Product } from "../../types.ts";
+import { SellerProduct } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
 const emptyForm = {
@@ -15,34 +15,31 @@ const emptyForm = {
   imageUrl: "",
 };
 
-const escapeXml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-
-export function AdminProductsPage() {
-  const { currentUser, products, addProduct, updateProduct, deleteProduct } =
-    useAppContext();
+export function SellerStockPage() {
+  const {
+    currentUser,
+    sellerProducts,
+    addSellerProduct,
+    updateSellerProduct,
+    deleteSellerProduct,
+  } = useAppContext();
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
+  const [editing, setEditing] = useState<SellerProduct | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
-  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const isReadOnly = currentUser?.role === "staff";
+  const [deleteTarget, setDeleteTarget] = useState<SellerProduct | null>(null);
 
-  const actionTitle = useMemo(
-    () => (editing ? "Edit Product" : "Add Product"),
-    [editing],
+  const myProducts = useMemo(
+    () =>
+      sellerProducts.filter((product) => product.sellerId === currentUser?.id),
+    [currentUser?.id, sellerProducts],
   );
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return myProducts.filter((product) => {
       const searchable =
         `${product.name} ${product.brand} ${product.category}`.toLowerCase();
       const matchesQuery = searchable.includes(query.toLowerCase());
@@ -56,7 +53,7 @@ export function AdminProductsPage() {
 
       return matchesQuery && matchesCategory && matchesStock;
     });
-  }, [category, products, query, stockFilter]);
+  }, [category, myProducts, query, stockFilter]);
 
   const openAdd = () => {
     setEditing(null);
@@ -65,7 +62,7 @@ export function AdminProductsPage() {
     setOpen(true);
   };
 
-  const openEdit = (product: Product) => {
+  const openEdit = (product: SellerProduct) => {
     setEditing(product);
     setForm({
       name: product.name,
@@ -97,52 +94,11 @@ export function AdminProductsPage() {
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (editing) {
-      updateProduct({ ...editing, ...form });
+      updateSellerProduct({ ...editing, ...form });
     } else {
-      addProduct(form);
+      addSellerProduct(form);
     }
     setOpen(false);
-  };
-
-  const exportAsExcel = () => {
-    const rows = filteredProducts
-      .map(
-        (product) =>
-          `<Row><Cell><Data ss:Type="String">${escapeXml(product.name)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.brand)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.category)}</Data></Cell><Cell><Data ss:Type="Number">${product.price}</Data></Cell><Cell><Data ss:Type="Number">${product.stock}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.createdAt)}</Data></Cell></Row>`,
-      )
-      .join("");
-
-    const xml = `<?xml version="1.0"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
-  xmlns:x="urn:schemas-microsoft-com:office:excel"
-  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:html="http://www.w3.org/TR/REC-html40">
-  <Worksheet ss:Name="Products">
-    <Table>
-      <Row>
-        <Cell><Data ss:Type="String">Name</Data></Cell>
-        <Cell><Data ss:Type="String">Brand</Data></Cell>
-        <Cell><Data ss:Type="String">Category</Data></Cell>
-        <Cell><Data ss:Type="String">Price</Data></Cell>
-        <Cell><Data ss:Type="String">Stock</Data></Cell>
-        <Cell><Data ss:Type="String">Created At</Data></Cell>
-      </Row>
-      ${rows}
-    </Table>
-  </Worksheet>
-</Workbook>`;
-
-    const blob = new Blob([xml], {
-      type: "application/vnd.ms-excel;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateTag = new Date().toISOString().slice(0, 10);
-    link.href = url;
-    link.download = `products-${dateTag}.xls`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -150,32 +106,19 @@ export function AdminProductsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl font-bold text-slate-900">
-            Products Management
+            My Stock Management
           </h2>
           <p className="text-sm text-slate-500">
-            {isReadOnly
-              ? "Search and filter the product list."
-              : "Search, filter, and manage inventory with product photos."}
+            Add, edit, and track only your own stock items.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={exportAsExcel}
-            className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"
-          >
-            <Download className="h-4 w-4" /> Export Excel
-          </button>
-          {!isReadOnly ? (
-            <button
-              type="button"
-              onClick={openAdd}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
-            >
-              <Plus className="h-4 w-4" /> Add Product
-            </button>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          onClick={openAdd}
+          className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
+        >
+          <Plus className="h-4 w-4" /> Add My Product
+        </button>
       </div>
 
       <section className="mt-4 rounded-3xl border border-orange-100 bg-white p-4 shadow-soft">
@@ -185,7 +128,7 @@ export function AdminProductsPage() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search products"
+              placeholder="Search my stock"
               className="w-full border-none text-sm outline-none"
             />
           </label>
@@ -212,43 +155,39 @@ export function AdminProductsPage() {
       </section>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        {[
-          {
-            label: "In stock",
-            value: filteredProducts.filter((product) => product.stock > 3)
-              .length,
-            tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
-            note: "Healthy inventory",
-          },
-          {
-            label: "Low stock",
-            value: filteredProducts.filter(
-              (product) => product.stock > 0 && product.stock <= 3,
-            ).length,
-            tone: "bg-blue-50 text-blue-700 border-blue-100",
-            note: "Needs replenishment",
-          },
-          {
-            label: "Out of stock",
-            value: filteredProducts.filter((product) => product.stock === 0)
-              .length,
-            tone: "bg-rose-50 text-rose-700 border-rose-100",
-            note: "Unavailable right now",
-          },
-        ].map((status) => (
-          <article
-            key={status.label}
-            className={`rounded-3xl border p-4 shadow-soft ${status.tone}`}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em]">
-              {status.label}
-            </p>
-            <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
-              {status.value}
-            </p>
-            <p className="mt-1 text-sm text-slate-600">{status.note}</p>
-          </article>
-        ))}
+        <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            My products
+          </p>
+          <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
+            {myProducts.length}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Low stock items
+          </p>
+          <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
+            {
+              myProducts.filter(
+                (product) => product.stock > 0 && product.stock <= 3,
+              ).length
+            }
+          </p>
+        </div>
+        <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Inventory value
+          </p>
+          <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
+            {currency(
+              myProducts.reduce(
+                (sum, product) => sum + product.price * product.stock,
+                0,
+              ),
+            )}
+          </p>
+        </div>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-3xl border border-orange-100">
@@ -261,7 +200,7 @@ export function AdminProductsPage() {
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Price</th>
               <th className="px-4 py-3">Stock</th>
-              {!isReadOnly ? <th className="px-4 py-3">Actions</th> : null}
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -302,26 +241,24 @@ export function AdminProductsPage() {
                 >
                   {product.stock}
                 </td>
-                {!isReadOnly ? (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(product)}
-                        className="rounded-lg border border-orange-200 px-3 py-1 text-xs font-semibold text-slate-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(product)}
-                        className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                ) : null}
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(product)}
+                      className="rounded-lg border border-orange-200 px-3 py-1 text-xs font-semibold text-slate-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(product)}
+                      className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -329,9 +266,9 @@ export function AdminProductsPage() {
       </div>
 
       <Modal
-        open={!isReadOnly && open}
+        open={open}
         onClose={() => setOpen(false)}
-        title={actionTitle}
+        title={editing ? "Edit My Product" : "Add My Product"}
       >
         <form className="grid gap-3" onSubmit={onSubmit}>
           <input
@@ -364,6 +301,7 @@ export function AdminProductsPage() {
               <option value="Accessories">Accessories</option>
             </select>
           </div>
+
           <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-4">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-white p-2 text-orange-700 shadow-sm">
@@ -374,8 +312,7 @@ export function AdminProductsPage() {
                   Product Image
                 </p>
                 <p className="mt-1 text-xs leading-6 text-slate-500">
-                  Upload an image file. It will be saved as the product photo in
-                  the app.
+                  Upload an image file for your own stock record.
                 </p>
                 <input
                   type="file"
@@ -387,7 +324,7 @@ export function AdminProductsPage() {
                   <div className="mt-4 overflow-hidden rounded-2xl border border-orange-100 bg-white">
                     <img
                       src={imagePreview}
-                      alt="Product preview"
+                      alt="My product preview"
                       className="h-48 w-full object-cover"
                     />
                   </div>
@@ -395,6 +332,7 @@ export function AdminProductsPage() {
               </div>
             </div>
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-xl border border-orange-200 px-3 py-2"
@@ -433,9 +371,9 @@ export function AdminProductsPage() {
       </Modal>
 
       <Modal
-        open={!isReadOnly && Boolean(deleteTarget)}
+        open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
-        title="Delete Product"
+        title="Delete My Product"
       >
         <div className="grid gap-4">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
@@ -445,29 +383,15 @@ export function AdminProductsPage() {
               </div>
               <div>
                 <p className="font-semibold text-slate-900">
-                  Are you sure you want to delete this product?
+                  Are you sure you want to delete this item?
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {deleteTarget?.name} will be removed from the inventory list.
+                  {deleteTarget?.name} will be removed from your stock list.
                   This action can not be undone.
                 </p>
               </div>
             </div>
           </div>
-
-          {deleteTarget ? (
-            <div className="rounded-2xl border border-orange-100 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Selected product
-              </p>
-              <p className="mt-1 font-heading text-lg font-semibold text-slate-900">
-                {deleteTarget.name}
-              </p>
-              <p className="text-sm text-slate-500">
-                {deleteTarget.brand} • {deleteTarget.category}
-              </p>
-            </div>
-          ) : null}
 
           <div className="flex flex-wrap justify-end gap-3">
             <button
@@ -481,7 +405,7 @@ export function AdminProductsPage() {
               type="button"
               onClick={() => {
                 if (deleteTarget) {
-                  deleteProduct(deleteTarget.id);
+                  deleteSellerProduct(deleteTarget.id);
                 }
                 setDeleteTarget(null);
               }}

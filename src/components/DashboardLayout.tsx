@@ -4,7 +4,7 @@ import { useAppContext } from "../context/AppContext.tsx";
 import { DashboardSidebar } from "./DashboardSidebar.tsx";
 
 interface DashboardLayoutProps {
-  role: "admin" | "seller";
+  role: "admin" | "seller" | "staff";
 }
 
 export function DashboardLayout({ role }: DashboardLayoutProps) {

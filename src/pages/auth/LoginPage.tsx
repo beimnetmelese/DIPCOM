@@ -18,7 +18,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("admin@test.com");
   const [password, setPassword] = useState("123456");
   const [message, setMessage] = useState(
-    "Use admin@test.com / 123456 or seller@test.com / 123456",
+    "Use admin@test.com / 123456, staff@test.com / 123456, or seller@test.com / 123456",
   );
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -29,6 +29,11 @@ export function LoginPage() {
     if (result.ok) {
       if (email === "admin@test.com") {
         navigate("/admin");
+        return;
+      }
+
+      if (email === "staff@test.com") {
+        navigate("/staff/products");
         return;
       }
 
@@ -97,7 +102,7 @@ export function LoginPage() {
                 Welcome back
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Role-based access for admin and seller journeys.
+                Role-based access for admin, staff, and seller journeys.
               </p>
             </div>
           </div>

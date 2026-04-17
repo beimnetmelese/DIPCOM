@@ -2,6 +2,7 @@ import { ReactNode, createContext, useContext, useMemo, useState } from "react";
 import {
   initialProducts,
   initialReservations,
+  initialSellerProducts,
   initialSellers,
 } from "../data/mockData.ts";
 import {
@@ -10,6 +11,7 @@ import {
   Product,
   Reservation,
   Seller,
+  SellerProduct,
   ToastMessage,
 } from "../types.ts";
 
@@ -39,6 +41,7 @@ interface ReservationResult {
 interface AppContextValue {
   currentUser: AuthUser | null;
   products: Product[];
+  sellerProducts: SellerProduct[];
   sellers: Seller[];
   adminAccounts: AdminAccount[];
   reservations: Reservation[];
@@ -54,6 +57,11 @@ interface AppContextValue {
   addProduct: (payload: Omit<Product, "id" | "createdAt">) => void;
   updateProduct: (payload: Product) => void;
   deleteProduct: (productId: string) => void;
+  addSellerProduct: (
+    payload: Omit<SellerProduct, "id" | "createdAt" | "sellerId">,
+  ) => void;
+  updateSellerProduct: (payload: SellerProduct) => void;
+  deleteSellerProduct: (productId: string) => void;
   reserveProduct: (productId: string, quantity: number) => ReservationResult;
   confirmReservationDelivery: (reservationId: string) => void;
   removeReservation: (reservationId: string) => void;
@@ -65,6 +73,8 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 const adminEmail = "admin@test.com";
 const adminPassword = "123456";
+const staffEmail = "staff@test.com";
+const staffPassword = "123456";
 const defaultProductImage =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
 const initialAdmins: AdminAccount[] = [
@@ -89,6 +99,9 @@ const makeId = () => crypto.randomUUID();
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>(
+    initialSellerProducts,
+  );
   const [sellers, setSellers] = useState<Seller[]>(initialSellers);
   const [adminAccounts, setAdminAccounts] =
     useState<AdminAccount[]>(initialAdmins);
@@ -123,6 +136,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       pushToast("Welcome back", "Admin session started.", "success");
       return { ok: true, message: "Admin login successful." };
+    }
+
+    if (email === staffEmail && password === staffPassword) {
+      setCurrentUser({
+        role: "staff",
+        id: "staff",
+        name: "Reservations Staff",
+        email,
+      });
+      pushToast(
+        "Welcome back",
+        "Staff session started with limited access.",
+        "success",
+      );
+      return { ok: true, message: "Staff login successful." };
     }
 
     const seller = sellers.find(
@@ -289,6 +317,81 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addSellerProduct = (
+    payload: Omit<SellerProduct, "id" | "createdAt" | "sellerId">,
+  ) => {
+    if (!currentUser || currentUser.role !== "seller") {
+      return;
+    }
+
+    setSellerProducts((prev) => [
+      {
+        ...payload,
+        imageUrl: payload.imageUrl ?? defaultProductImage,
+        id: makeId(),
+        sellerId: currentUser.id,
+        createdAt: new Date().toISOString().slice(0, 10),
+      },
+      ...prev,
+    ]);
+
+    pushToast(
+      "My stock updated",
+      `${payload.name} was added to your stock list.`,
+      "success",
+    );
+  };
+
+  const updateSellerProduct = (payload: SellerProduct) => {
+    if (!currentUser || currentUser.role !== "seller") {
+      return;
+    }
+
+    setSellerProducts((prev) =>
+      prev.map((product) => {
+        if (product.id !== payload.id || product.sellerId !== currentUser.id) {
+          return product;
+        }
+
+        return payload;
+      }),
+    );
+
+    pushToast(
+      "My stock updated",
+      `${payload.name} details were saved.`,
+      "success",
+    );
+  };
+
+  const deleteSellerProduct = (productId: string) => {
+    if (!currentUser || currentUser.role !== "seller") {
+      return;
+    }
+
+    const target = sellerProducts.find(
+      (product) =>
+        product.id === productId && product.sellerId === currentUser.id,
+    );
+
+    if (!target) {
+      return;
+    }
+
+    setSellerProducts((prev) =>
+      prev.filter(
+        (product) =>
+          !(product.id === productId && product.sellerId === currentUser.id),
+      ),
+    );
+
+    pushToast(
+      "My stock updated",
+      `${target.name} was removed from your stock list.`,
+      "warning",
+    );
+  };
+
   const reserveProduct = (
     productId: string,
     quantity: number,
@@ -400,13 +503,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setCommissionPercent = (value: number) => {
     setCommissionPercentState(value);
-    pushToast("Commission updated", `Commission is now ${value}%.`, "info");
+    pushToast("Discount updated", `Discount is now ${value}%.`, "info");
   };
 
   const value = useMemo(
     () => ({
       currentUser,
       products,
+      sellerProducts,
       sellers,
       adminAccounts,
       reservations,
@@ -422,6 +526,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addProduct,
       updateProduct,
       deleteProduct,
+      addSellerProduct,
+      updateSellerProduct,
+      deleteSellerProduct,
       reserveProduct,
       confirmReservationDelivery,
       removeReservation,
@@ -431,6 +538,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       currentUser,
       products,
+      sellerProducts,
       sellers,
       adminAccounts,
       reservations,
