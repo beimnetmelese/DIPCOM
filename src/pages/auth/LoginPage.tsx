@@ -15,25 +15,28 @@ import { useAppContext } from "../../context/AppContext.tsx";
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, currentUser } = useAppContext();
-  const [email, setEmail] = useState("admin@test.com");
-  const [password, setPassword] = useState("123456");
-  const [message, setMessage] = useState(
-    "Use admin@test.com / 123456, staff@test.com / 123456, or seller@test.com / 123456",
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = login(email, password);
+    const result = await login(email, password);
     setMessage(result.message);
 
     if (result.ok) {
-      if (email === "admin@test.com") {
+      if (result.role === "admin") {
         navigate("/admin");
         return;
       }
 
-      if (email === "staff@test.com") {
+      if (result.role === "staff") {
         navigate("/staff/products");
+        return;
+      }
+
+      if (result.role === "seller" && result.sellerStatus === "pending") {
+        navigate("/seller/pending");
         return;
       }
 
@@ -143,9 +146,11 @@ export function LoginPage() {
             </motion.button>
           </form>
 
-          <div className="mt-5 rounded-3xl border border-orange-100 bg-orange-50 p-4 text-sm text-slate-700">
-            {message}
-          </div>
+          {message ? (
+            <div className="mt-5 rounded-3xl border border-orange-100 bg-orange-50 p-4 text-sm text-slate-700">
+              {message}
+            </div>
+          ) : null}
 
           <p className="mt-4 text-sm text-slate-500">
             Need a seller account?{" "}

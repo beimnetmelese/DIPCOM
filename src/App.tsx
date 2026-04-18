@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { DashboardLayout } from "./components/DashboardLayout.tsx";
 import { PublicLayout } from "./components/PublicLayout.tsx";
 import { ToastContainer } from "./components/ToastContainer.tsx";
@@ -12,6 +12,7 @@ import { AdminSellersPage } from "./pages/admin/AdminSellersPage.tsx";
 import { AdminSettingsPage } from "./pages/admin/AdminSettingsPage.tsx";
 import { LoginPage } from "./pages/auth/LoginPage.tsx";
 import { RegisterPage } from "./pages/auth/RegisterPage.tsx";
+import { SellerPendingPage } from "./pages/auth/SellerPendingPage.tsx";
 import { AboutPage } from "./pages/public/AboutPage.tsx";
 import { ContactPage } from "./pages/public/ContactPage.tsx";
 import { HomePage } from "./pages/public/HomePage.tsx";
@@ -29,30 +30,49 @@ function ProtectedRoute({
   children: ReactNode;
 }) {
   const { currentUser } = useAppContext();
+  const location = useLocation();
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
+  if (
+    currentUser.role === "seller" &&
+    currentUser.sellerStatus === "pending" &&
+    !location.pathname.startsWith("/seller/pending")
+  ) {
+    return <Navigate to="/seller/pending" replace />;
+  }
+
+  if (
+    currentUser.role === "seller" &&
+    currentUser.sellerStatus === "approved" &&
+    location.pathname.startsWith("/seller/pending")
+  ) {
+    return <Navigate to="/seller" replace />;
+  }
+
   if (!allowedRoles.includes(currentUser.role)) {
-    return (
-      <Navigate
-        to={
-          currentUser.role === "admin"
-            ? "/admin"
-            : currentUser.role === "staff"
-              ? "/staff/products"
-              : "/seller"
-        }
-        replace
-      />
-    );
+    const redirectPath =
+      currentUser.role === "admin"
+        ? "/admin"
+        : currentUser.role === "staff"
+          ? "/staff/products"
+          : "/seller";
+
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;
 }
 
 function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
   return (
     <>
       <Routes>
@@ -63,6 +83,14 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/seller/pending"
+            element={
+              <ProtectedRoute allowedRoles={["seller"]}>
+                <SellerPendingPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         <Route

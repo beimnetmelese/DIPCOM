@@ -15,7 +15,7 @@ export function SellerReservationsPage() {
   const { currentUser, reservations } = useAppContext();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "pending" | "approved" | "rejected"
+    "all" | "pending" | "approved" | "rejected" | "delivered"
   >("all");
 
   const myReservations = useMemo(
@@ -27,13 +27,16 @@ export function SellerReservationsPage() {
   );
 
   const pendingCount = myReservations.filter(
-    (reservation) => reservation.status === "active",
+    (reservation) => reservation.status === "pending",
   ).length;
   const approvedCount = myReservations.filter(
-    (reservation) => reservation.status === "delivered",
+    (reservation) => reservation.status === "approved",
   ).length;
   const rejectedCount = myReservations.filter(
-    (reservation) => reservation.status === "removed",
+    (reservation) => reservation.status === "rejected",
+  ).length;
+  const deliveredCount = myReservations.filter(
+    (reservation) => reservation.status === "delivered",
   ).length;
 
   const filteredReservations = useMemo(
@@ -43,14 +46,8 @@ export function SellerReservationsPage() {
           const searchable =
             `${reservation.productName} ${reservation.sellerName}`.toLowerCase();
           const matchesQuery = searchable.includes(query.toLowerCase());
-          const mappedStatus =
-            reservation.status === "active"
-              ? "pending"
-              : reservation.status === "delivered"
-                ? "approved"
-                : "rejected";
           const matchesStatus =
-            statusFilter === "all" || mappedStatus === statusFilter;
+            statusFilter === "all" || reservation.status === statusFilter;
           return matchesQuery && matchesStatus;
         })
         .sort(
@@ -70,7 +67,7 @@ export function SellerReservationsPage() {
               <Clock3 className="h-4 w-4" /> Seller reservations
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Track pending, approved, and rejected reservation records.
+              Track reservation progress from pending to delivered.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
               Search your reservation list, filter by status, and monitor your
@@ -80,23 +77,29 @@ export function SellerReservationsPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Pending"
           value={String(pendingCount)}
-          note="Waiting for delivery confirmation"
+          note="New reservation request"
           icon={<Clock3 className="h-5 w-5" />}
         />
         <StatCard
           title="Approved"
           value={String(approvedCount)}
-          note="Delivered successfully"
+          note="Ready for delivery"
           icon={<CheckCircle2 className="h-5 w-5" />}
         />
         <StatCard
           title="Rejected"
           value={String(rejectedCount)}
-          note="Removed from queue"
+          note="Declined reservations"
+          icon={<XCircle className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Delivered"
+          value={String(deliveredCount)}
+          note="Completed reservations"
           icon={<XCircle className="h-5 w-5" />}
         />
       </div>
@@ -132,13 +135,19 @@ export function SellerReservationsPage() {
             { key: "pending", label: "Pending" },
             { key: "approved", label: "Approved" },
             { key: "rejected", label: "Rejected" },
+            { key: "delivered", label: "Delivered" },
           ].map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() =>
                 setStatusFilter(
-                  item.key as "all" | "pending" | "approved" | "rejected",
+                  item.key as
+                    | "all"
+                    | "pending"
+                    | "approved"
+                    | "rejected"
+                    | "delivered",
                 )
               }
               className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
@@ -154,34 +163,41 @@ export function SellerReservationsPage() {
 
         <div className="mt-5 grid gap-3">
           {filteredReservations.map((reservation) => {
-            const mappedStatus =
-              reservation.status === "active"
-                ? "pending"
-                : reservation.status === "delivered"
-                  ? "approved"
-                  : "rejected";
             const statusTone =
-              mappedStatus === "approved"
+              reservation.status === "delivered"
                 ? {
                     rail: "bg-emerald-500",
                     badge:
                       "bg-emerald-100/90 text-emerald-700 ring-1 ring-emerald-300/60",
                     glow: "from-emerald-100/60 via-white to-white",
                   }
-                : mappedStatus === "rejected"
+                : reservation.status === "rejected"
                   ? {
                       rail: "bg-rose-500",
                       badge:
                         "bg-rose-100/90 text-rose-700 ring-1 ring-rose-300/60",
                       glow: "from-rose-100/60 via-white to-white",
                     }
-                  : {
-                      rail: "bg-amber-500",
-                      badge:
-                        "bg-amber-100/90 text-amber-700 ring-1 ring-amber-300/60",
-                      glow: "from-amber-100/60 via-white to-white",
-                    };
-
+                  : reservation.status === "approved"
+                    ? {
+                        rail: "bg-indigo-500",
+                        badge:
+                          "bg-indigo-100/90 text-indigo-700 ring-1 ring-indigo-300/60",
+                        glow: "from-indigo-100/60 via-white to-white",
+                      }
+                    : reservation.status === "pending"
+                      ? {
+                          rail: "bg-amber-500",
+                          badge:
+                            "bg-amber-100/90 text-amber-700 ring-1 ring-amber-300/60",
+                          glow: "from-amber-100/60 via-white to-white",
+                        }
+                      : {
+                          rail: "bg-amber-500",
+                          badge:
+                            "bg-amber-100/90 text-amber-700 ring-1 ring-amber-300/60",
+                          glow: "from-amber-100/60 via-white to-white",
+                        };
             return (
               <article
                 key={reservation.id}
@@ -222,7 +238,7 @@ export function SellerReservationsPage() {
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${statusTone.badge}`}
                     >
-                      {mappedStatus}
+                      {reservation.status}
                     </span>
 
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">

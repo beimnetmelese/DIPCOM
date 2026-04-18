@@ -15,6 +15,15 @@ export function PublicNavbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const dashboardPath =
+    currentUser?.role === "admin"
+      ? "/admin"
+      : currentUser?.role === "staff"
+        ? "/staff/products"
+        : currentUser?.sellerStatus === "pending"
+          ? "/seller/pending"
+          : "/seller";
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -49,7 +58,7 @@ export function PublicNavbar() {
           {currentUser ? (
             <>
               <Link
-                to={currentUser.role === "admin" ? "/admin" : "/seller"}
+                to={dashboardPath}
                 className="rounded-xl border border-orange-200 px-3 py-2 text-sm font-semibold text-orange-700"
               >
                 Open Dashboard
@@ -116,7 +125,7 @@ export function PublicNavbar() {
             {currentUser ? (
               <>
                 <Link
-                  to={currentUser.role === "admin" ? "/admin" : "/seller"}
+                  to={dashboardPath}
                   className="rounded-xl border border-orange-200 px-3 py-2 text-center text-sm font-semibold text-orange-700"
                 >
                   Open Dashboard

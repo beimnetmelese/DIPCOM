@@ -1,7 +1,10 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, ShieldAlert, ShieldUser, Trash2 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+
+const normalizeIntegerInput = (value: string) =>
+  value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
 
 export function AdminSettingsPage() {
   const {
@@ -11,13 +14,18 @@ export function AdminSettingsPage() {
     registerAdmin,
     deleteAdminAccount,
   } = useAppContext();
-  const [value, setValue] = useState(commissionPercent);
+  const [valueInput, setValueInput] = useState(String(commissionPercent));
   const [adminForm, setAdminForm] = useState({
     name: "",
     email: "",
-    role: "Admin",
+    roleType: "staff" as "admin" | "staff",
+    password: "",
   });
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValueInput(String(commissionPercent));
+  }, [commissionPercent]);
 
   const totalAdmins = adminAccounts.length;
   const adminRoles = useMemo(
@@ -25,15 +33,17 @@ export function AdminSettingsPage() {
     [adminAccounts],
   );
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setCommissionPercent(value);
+    const parsed = Number(valueInput || 0);
+    const clamped = Math.min(50, Math.max(0, parsed));
+    await setCommissionPercent(clamped);
   };
 
-  const onAdminSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onAdminSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    registerAdmin(adminForm);
-    setAdminForm({ name: "", email: "", role: "Admin" });
+    await registerAdmin(adminForm);
+    setAdminForm({ name: "", email: "", roleType: "staff", password: "" });
   };
 
   return (
@@ -107,8 +117,12 @@ export function AdminSettingsPage() {
                 type="number"
                 min={0}
                 max={50}
-                value={value}
-                onChange={(event) => setValue(Number(event.target.value))}
+                value={valueInput}
+                onChange={(event) => {
+                  const next = normalizeIntegerInput(event.target.value);
+                  const capped = Number(next || 0) > 50 ? "50" : next;
+                  setValueInput(capped);
+                }}
               />
             </label>
             <button
@@ -155,12 +169,31 @@ export function AdminSettingsPage() {
               }
               required
             />
+            <select
+              className="rounded-2xl border border-orange-200 px-4 py-3 outline-none"
+              value={adminForm.roleType}
+              onChange={(event) =>
+                setAdminForm((prev) => ({
+                  ...prev,
+                  roleType: event.target.value as "admin" | "staff",
+                }))
+              }
+              required
+            >
+              <option value="staff">Staff Member</option>
+              <option value="admin">Admin</option>
+            </select>
             <input
               className="rounded-2xl border border-orange-200 px-4 py-3 outline-none"
-              placeholder="Role name"
-              value={adminForm.role}
+              placeholder="Password"
+              type="password"
+              minLength={6}
+              value={adminForm.password}
               onChange={(event) =>
-                setAdminForm((prev) => ({ ...prev, role: event.target.value }))
+                setAdminForm((prev) => ({
+                  ...prev,
+                  password: event.target.value,
+                }))
               }
               required
             />

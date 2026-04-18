@@ -6,8 +6,14 @@ import {
   Clock3,
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { useAppContext } from "../../context/AppContext.tsx";
 
 export function ContactPage() {
+  const { siteSettings } = useAppContext();
+  const mapUrl = siteSettings.mapUrl.includes("embed")
+    ? siteSettings.mapUrl
+    : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set";
+
   return (
     <AnimatedPage>
       <section className="overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-soft">
@@ -21,7 +27,7 @@ export function ContactPage() {
               <Sparkles className="h-4 w-4" /> Contact Us
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Beautifully connected support for your business.
+              Reach us for support, demos, and reseller onboarding.
             </h1>
             <p className="mt-4 max-w-2xl text-white/90">
               Visit us, call us, or use the map below to find our office near
@@ -51,7 +57,7 @@ export function ContactPage() {
                       Phone
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      +1 (555) 900-1001
+                      {siteSettings.contactPhone}
                     </p>
                   </div>
                 </div>
@@ -67,8 +73,7 @@ export function ContactPage() {
                       Address
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11,
-                      Addis Ababa
+                      {siteSettings.contactAddress}
                     </p>
                   </div>
                 </div>
@@ -84,7 +89,7 @@ export function ContactPage() {
                       Hours
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      Monday - Saturday, 8:30 AM - 6:00 PM
+                      {siteSettings.businessHours}
                     </p>
                   </div>
                 </div>
@@ -100,12 +105,12 @@ export function ContactPage() {
                       TikTok
                     </p>
                     <a
-                      href="https://www.tiktok.com/@dipcomtechnologies"
+                      href={siteSettings.tiktokUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
                     >
-                      tiktok.com/@dipcomtechnologies
+                      {siteSettings.tiktokUrl.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
                 </div>
@@ -126,7 +131,7 @@ export function ContactPage() {
             </div>
             <div className="aspect-[16/12] w-full bg-orange-50">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set"
+                src={mapUrl}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

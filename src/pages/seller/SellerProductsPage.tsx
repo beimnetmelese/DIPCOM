@@ -17,12 +17,19 @@ const initialFilters: ProductFilters = {
   sortBy: "newest",
 };
 
+const normalizeIntegerInput = (value: string) =>
+  value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+
 export function SellerProductsPage() {
-  const { products, reserveProduct, commissionPercent } = useAppContext();
+  const { categories, products, reserveProduct, commissionPercent } =
+    useAppContext();
   const [filters, setFilters] = useState<ProductFilters>(initialFilters);
   const [reserveTarget, setReserveTarget] = useState<Product | null>(null);
   const [reserveQuantityInput, setReserveQuantityInput] = useState("1");
+  const [minPriceInput, setMinPriceInput] = useState("0");
+  const [maxPriceInput, setMaxPriceInput] = useState("1000");
   const [reserveError, setReserveError] = useState("");
+  const [isReserving, setIsReserving] = useState(false);
   const [deliveryNotice, setDeliveryNotice] = useState<{
     productName: string;
     quantity: number;
@@ -35,13 +42,18 @@ export function SellerProductsPage() {
     [products],
   );
 
+  const categoryChoices = useMemo(
+    () => categories.filter((item) => item.id && item.name),
+    [categories],
+  );
+
   const filtered = useMemo(() => {
     const result = products.filter((product) => {
       const searchText =
         `${product.name} ${product.brand} ${product.category}`.toLowerCase();
       const matchQuery = searchText.includes(filters.query.toLowerCase());
       const matchCategory =
-        filters.category === "all" || product.category === filters.category;
+        filters.category === "all" || product.categoryId === filters.category;
       const matchBrand =
         filters.brand === "all" || product.brand === filters.brand;
       const matchPrice =
@@ -90,12 +102,15 @@ export function SellerProductsPage() {
   };
 
   const closeReserveModal = () => {
+    if (isReserving) {
+      return;
+    }
     setReserveTarget(null);
     setReserveError("");
   };
 
-  const submitReservation = () => {
-    if (!reserveTarget) {
+  const submitReservation = async () => {
+    if (!reserveTarget || isReserving) {
       return;
     }
 
@@ -110,17 +125,23 @@ export function SellerProductsPage() {
       return;
     }
 
-    const result = reserveProduct(reserveTarget.id, parsedQuantity);
-    if (!result.ok) {
-      setReserveError(result.message);
-      return;
-    }
+    setIsReserving(true);
+    try {
+      const result = await reserveProduct(reserveTarget.id, parsedQuantity);
+      if (!result.ok) {
+        setReserveError(result.message);
+        return;
+      }
 
-    setDeliveryNotice({
-      productName: reserveTarget.name,
-      quantity: parsedQuantity,
-    });
-    closeReserveModal();
+      setDeliveryNotice({
+        productName: reserveTarget.name,
+        quantity: parsedQuantity,
+      });
+      setReserveTarget(null);
+      setReserveError("");
+    } finally {
+      setIsReserving(false);
+    }
   };
 
   return (
@@ -173,7 +194,7 @@ export function SellerProductsPage() {
 
       <section className="mt-6 rounded-3xl border border-orange-100 bg-white p-4 shadow-soft sm:p-5">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <label className="col-span-2 flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-50/50 px-4 py-3">
+          <label className="md:col-span-2 xl:col-span-2 flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-50/50 px-4 py-3">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               value={filters.query}
@@ -192,8 +213,11 @@ export function SellerProductsPage() {
             className="rounded-2xl border border-orange-200 px-3 py-3 text-sm outline-none"
           >
             <option value="all">All Categories</option>
-            <option value="Printers">Printers</option>
-            <option value="Accessories">Accessories</option>
+            {categoryChoices.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
           <select
             value={filters.brand}
@@ -210,28 +234,32 @@ export function SellerProductsPage() {
             ))}
           </select>
           <input
-            type="number"
-            min={0}
-            value={filters.minPrice}
-            onChange={(event) =>
+            type="text"
+            inputMode="numeric"
+            value={minPriceInput}
+            onChange={(event) => {
+              const next = normalizeIntegerInput(event.target.value);
+              setMinPriceInput(next);
               setFilters((prev) => ({
                 ...prev,
-                minPrice: Number(event.target.value),
-              }))
-            }
+                minPrice: Number(next || 0),
+              }));
+            }}
             className="rounded-2xl border border-orange-200 px-3 py-3 text-sm outline-none"
             placeholder="Min price"
           />
           <input
-            type="number"
-            min={1}
-            value={filters.maxPrice}
-            onChange={(event) =>
+            type="text"
+            inputMode="numeric"
+            value={maxPriceInput}
+            onChange={(event) => {
+              const next = normalizeIntegerInput(event.target.value);
+              setMaxPriceInput(next);
               setFilters((prev) => ({
                 ...prev,
-                maxPrice: Number(event.target.value),
-              }))
-            }
+                maxPrice: Number(next || 0),
+              }));
+            }}
             className="rounded-2xl border border-orange-200 px-3 py-3 text-sm outline-none"
             placeholder="Max price"
           />
@@ -406,14 +434,16 @@ export function SellerProductsPage() {
               <button
                 type="button"
                 onClick={submitReservation}
-                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                disabled={isReserving}
+                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                Reserve
+                {isReserving ? "Reserving..." : "Reserve"}
               </button>
               <button
                 type="button"
                 onClick={closeReserveModal}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+                disabled={isReserving}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>

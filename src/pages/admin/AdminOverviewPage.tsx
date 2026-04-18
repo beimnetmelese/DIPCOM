@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 export function AdminOverviewPage() {
-  const { products, sellers, reservations } = useAppContext();
+  const { categories, products, sellers, reservations } = useAppContext();
 
   const totalStockValue = products.reduce(
     (sum, product) => sum + product.stock * product.price,
@@ -36,12 +36,16 @@ export function AdminOverviewPage() {
   );
   const salesTrend = [14200, 15600, 13900, 18900, 20100, 22600];
 
-  const categories = ["Printers", "Accessories"];
-  const categoryData = categories.map((category) =>
-    products
-      .filter((product) => product.category === category)
-      .reduce((sum, product) => sum + product.stock, 0),
-  );
+  const categoryLabels = categories.length
+    ? categories.map((category) => category.name)
+    : ["No categories yet"];
+  const categoryData = categories.length
+    ? categories.map((category) =>
+        products
+          .filter((product) => product.categoryId === category.id)
+          .reduce((sum, product) => sum + product.stock, 0),
+      )
+    : [0];
 
   const brandCounts = [
     ...new Set(products.map((product) => product.brand)),
@@ -131,11 +135,18 @@ export function AdminOverviewPage() {
           </p>
           <Pie
             data={{
-              labels: categories,
+              labels: categoryLabels,
               datasets: [
                 {
                   data: categoryData,
-                  backgroundColor: ["#f97316", "#fdba74"],
+                  backgroundColor: [
+                    "#f97316",
+                    "#fdba74",
+                    "#fb923c",
+                    "#ea580c",
+                    "#fdba74",
+                    "#c2410c",
+                  ],
                   borderWidth: 2,
                   borderColor: "#fff",
                 },

@@ -1,6 +1,13 @@
 export type SellerStatus = 'approved' | 'pending' | 'rejected'
 export type UserRole = 'admin' | 'seller' | 'staff'
 
+export interface Category {
+  id: string
+  name: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface Product {
   id: string
   name: string
@@ -8,6 +15,7 @@ export interface Product {
   stock: number
   brand: string
   category: string
+  categoryId: string
   imageUrl?: string
   createdAt: string
 }
@@ -16,12 +24,27 @@ export interface SellerProduct extends Product {
   sellerId: string
 }
 
+export interface ProductUpsertPayload {
+  name: string
+  price: number
+  stock: number
+  brand: string
+  category: string
+  categoryId: string
+  imageFile?: File | null
+}
+
+export interface SellerProductUpsertPayload extends ProductUpsertPayload {
+  imageUrl?: string
+}
+
 export interface Seller {
   id: string
   name: string
   email: string
   businessName: string
-  password: string
+  phoneNumber: string
+  password?: string
   status: SellerStatus
   joinedAt: string
 }
@@ -43,10 +66,29 @@ export interface Reservation {
   quantity: number
   baseTotal: number
   finalTotal: number
-  status: 'active' | 'delivered' | 'removed'
+  discountPercent?: number
+  status: 'pending' | 'approved' | 'rejected' | 'delivered'
   createdAt: string
   deliveredAt?: string
-  removedAt?: string
+  rejectedAt?: string
+}
+
+export interface SiteSettings {
+  id: number
+  commissionPercent: number
+  contactPhone: string
+  contactAddress: string
+  businessHours: string
+  tiktokUrl: string
+  mapUrl: string
+  heroTagline: string
+  heroTitle: string
+  heroDescription: string
+  aboutTitle: string
+  aboutDescription: string
+  yearsExperience: number
+  studentsTrained: number
+  updatedAt?: string
 }
 
 export interface AuthUser {
@@ -54,6 +96,7 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  sellerStatus?: SellerStatus
 }
 
 export interface ProductFilters {

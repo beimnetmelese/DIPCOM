@@ -6,6 +6,7 @@ import {
   Building2,
   Lock,
   Mail,
+  Phone,
   ShieldCheck,
   UserPlus,
 } from "lucide-react";
@@ -19,14 +20,23 @@ export function RegisterPage() {
     name: "",
     email: "",
     businessName: "",
+    phoneNumber: "",
     password: "",
   });
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    registerSeller(form);
-    setSubmitted(true);
-    setForm({ name: "", email: "", businessName: "", password: "" });
+    const result = await registerSeller(form);
+    if (result.ok) {
+      setSubmitted(true);
+      setForm({
+        name: "",
+        email: "",
+        businessName: "",
+        phoneNumber: "",
+        password: "",
+      });
+    }
   };
 
   return (
@@ -150,6 +160,25 @@ export function RegisterPage() {
                     setForm((prev) => ({
                       ...prev,
                       businessName: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              Phone Number
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
+                <Phone className="h-4 w-4 text-slate-400" />
+                <input
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                  placeholder="Phone Number"
+                  type="tel"
+                  value={form.phoneNumber}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      phoneNumber: event.target.value,
                     }))
                   }
                   required

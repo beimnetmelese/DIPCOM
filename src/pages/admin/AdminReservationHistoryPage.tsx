@@ -82,7 +82,7 @@ export function AdminReservationHistoryPage() {
   const { reservations } = useAppContext();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "approved" | "rejected"
+    "all" | "delivered" | "rejected"
   >("all");
   const [historyTimeRange, setHistoryTimeRange] =
     useState<(typeof timeRanges)[number]["key"]>("30d");
@@ -98,11 +98,15 @@ export function AdminReservationHistoryPage() {
 
   const filteredHistory = useMemo(() => {
     return reservations
-      .filter((reservation) => reservation.status !== "active")
+      .filter(
+        (reservation) =>
+          reservation.status === "rejected" ||
+          reservation.status === "delivered",
+      )
       .filter((reservation) => {
         const referenceDate =
           reservation.deliveredAt ??
-          reservation.removedAt ??
+          reservation.rejectedAt ??
           reservation.createdAt;
         const matchesTimeRange = isDateInRange(
           referenceDate,
@@ -114,17 +118,15 @@ export function AdminReservationHistoryPage() {
         const searchable =
           `${reservation.sellerName} ${reservation.productName} ${reservation.status}`.toLowerCase();
         const matchesQuery = searchable.includes(query.toLowerCase());
-        const mappedStatus =
-          reservation.status === "delivered" ? "approved" : "rejected";
         const matchesStatus =
-          statusFilter === "all" || mappedStatus === statusFilter;
+          statusFilter === "all" || reservation.status === statusFilter;
 
         return matchesTimeRange && matchesQuery && matchesStatus;
       })
       .sort(
         (a, b) =>
-          new Date(b.deliveredAt ?? b.removedAt ?? b.createdAt).getTime() -
-          new Date(a.deliveredAt ?? a.removedAt ?? a.createdAt).getTime(),
+          new Date(b.deliveredAt ?? b.rejectedAt ?? b.createdAt).getTime() -
+          new Date(a.deliveredAt ?? a.rejectedAt ?? a.createdAt).getTime(),
       );
   }, [
     historyFromDate,
@@ -138,11 +140,15 @@ export function AdminReservationHistoryPage() {
   const summaryHistory = useMemo(
     () =>
       reservations
-        .filter((reservation) => reservation.status !== "active")
+        .filter(
+          (reservation) =>
+            reservation.status === "rejected" ||
+            reservation.status === "delivered",
+        )
         .filter((reservation) => {
           const referenceDate =
             reservation.deliveredAt ??
-            reservation.removedAt ??
+            reservation.rejectedAt ??
             reservation.createdAt;
           return isDateInRange(
             referenceDate,
@@ -157,8 +163,8 @@ export function AdminReservationHistoryPage() {
   const deliveredCount = reservations.filter(
     (reservation) => reservation.status === "delivered",
   ).length;
-  const removedCount = reservations.filter(
-    (reservation) => reservation.status === "removed",
+  const rejectedCount = reservations.filter(
+    (reservation) => reservation.status === "rejected",
   ).length;
   const historyCount = filteredHistory.length;
 
@@ -211,11 +217,10 @@ export function AdminReservationHistoryPage() {
               <Archive className="h-4 w-4" /> Reservation history
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Delivery history and archived reservations in one clean view.
+              Delivered and rejected reservations in one clean history view.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-              Confirmed deliveries move here automatically, and removed items
-              are archived with a clear status trail.
+              Track completed and rejected workflow outcomes.
             </p>
           </div>
         </div>
@@ -223,15 +228,15 @@ export function AdminReservationHistoryPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Delivered"
-          value={String(deliveredCount)}
-          note="Moved from reservations queue"
+          title="Rejected"
+          value={String(rejectedCount)}
+          note="Declined reservations"
           icon={<CheckCircle2 className="h-5 w-5" />}
         />
         <StatCard
-          title="Removed"
-          value={String(removedCount)}
-          note="Archived after removal"
+          title="Delivered"
+          value={String(deliveredCount)}
+          note="Completed reservations"
           icon={<Trash2 className="h-5 w-5" />}
         />
         <StatCard
@@ -259,7 +264,7 @@ export function AdminReservationHistoryPage() {
               History
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Search delivered or removed reservations by seller or product.
+              Search delivered or rejected reservations by seller or product.
             </p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
@@ -310,14 +315,14 @@ export function AdminReservationHistoryPage() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {[
             { key: "all", label: "All" },
-            { key: "approved", label: "Approved" },
+            { key: "delivered", label: "Delivered" },
             { key: "rejected", label: "Rejected" },
           ].map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() =>
-                setStatusFilter(item.key as "all" | "approved" | "rejected")
+                setStatusFilter(item.key as "all" | "delivered" | "rejected")
               }
               className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                 statusFilter === item.key
@@ -342,11 +347,9 @@ export function AdminReservationHistoryPage() {
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {filteredHistory.map((reservation) => {
-            const mappedStatus =
-              reservation.status === "delivered" ? "approved" : "rejected";
             const statusClass =
-              mappedStatus === "approved"
-                ? "bg-emerald-100 text-emerald-700"
+              reservation.status === "delivered"
+                ? "bg-indigo-100 text-indigo-700"
                 : "bg-rose-100 text-rose-700";
 
             return (
@@ -359,7 +362,7 @@ export function AdminReservationHistoryPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       {readableDate(
                         reservation.deliveredAt ??
-                          reservation.removedAt ??
+                          reservation.rejectedAt ??
                           reservation.createdAt,
                       )}
                     </p>
@@ -373,7 +376,7 @@ export function AdminReservationHistoryPage() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}
                   >
-                    {mappedStatus}
+                    {reservation.status}
                   </span>
                 </div>
 
@@ -399,9 +402,9 @@ export function AdminReservationHistoryPage() {
                       Status note
                     </p>
                     <p className="mt-2 text-sm font-semibold text-slate-900">
-                      {mappedStatus === "approved"
-                        ? "Moved to history after delivery"
-                        : "Removed from the active queue"}
+                      {reservation.status === "rejected"
+                        ? "Rejected and archived"
+                        : "Delivered and completed"}
                     </p>
                   </div>
                 </div>

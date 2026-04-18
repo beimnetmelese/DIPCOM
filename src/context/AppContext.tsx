@@ -1,36 +1,62 @@
-import { ReactNode, createContext, useContext, useMemo, useState } from "react";
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   initialProducts,
   initialReservations,
   initialSellerProducts,
   initialSellers,
 } from "../data/mockData.ts";
-import {
-  AuthUser,
+import type {
   AdminAccount,
+  AuthUser,
+  Category,
   Product,
+  ProductUpsertPayload,
   Reservation,
   Seller,
   SellerProduct,
+  SellerProductUpsertPayload,
+  SiteSettings,
   ToastMessage,
 } from "../types.ts";
+import {
+  apiRequest,
+  clearStoredTokens,
+  getStoredRefreshToken,
+  storeTokens,
+} from "../utils/api.ts";
 
 interface RegisterPayload {
   name: string;
   email: string;
   businessName: string;
+  phoneNumber: string;
   password: string;
 }
 
 interface AdminRegisterPayload {
   name: string;
   email: string;
-  role: string;
+  roleType: "admin" | "staff";
+  password: string;
+}
+
+interface CategoryPayload {
+  name: string;
 }
 
 interface LoginResult {
   ok: boolean;
   message: string;
+  role?: AuthUser["role"];
+  sellerStatus?: "approved" | "pending" | "rejected";
 }
 
 interface ReservationResult {
@@ -40,43 +66,178 @@ interface ReservationResult {
 
 interface AppContextValue {
   currentUser: AuthUser | null;
+  categories: Category[];
   products: Product[];
   sellerProducts: SellerProduct[];
   sellers: Seller[];
   adminAccounts: AdminAccount[];
   reservations: Reservation[];
+  notifications: ApiNotification[];
   commissionPercent: number;
+  siteSettings: SiteSettings;
   toasts: ToastMessage[];
-  login: (email: string, password: string) => LoginResult;
+  unreadNotificationCount: number;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
-  registerSeller: (payload: RegisterPayload) => void;
-  registerAdmin: (payload: AdminRegisterPayload) => void;
-  deleteAdminAccount: (adminId: string) => void;
-  approveSeller: (sellerId: string) => void;
-  rejectSeller: (sellerId: string) => void;
-  addProduct: (payload: Omit<Product, "id" | "createdAt">) => void;
-  updateProduct: (payload: Product) => void;
-  deleteProduct: (productId: string) => void;
-  addSellerProduct: (
-    payload: Omit<SellerProduct, "id" | "createdAt" | "sellerId">,
-  ) => void;
-  updateSellerProduct: (payload: SellerProduct) => void;
-  deleteSellerProduct: (productId: string) => void;
-  reserveProduct: (productId: string, quantity: number) => ReservationResult;
-  confirmReservationDelivery: (reservationId: string) => void;
-  removeReservation: (reservationId: string) => void;
-  setCommissionPercent: (value: number) => void;
+  registerSeller: (payload: RegisterPayload) => Promise<LoginResult>;
+  registerAdmin: (payload: AdminRegisterPayload) => Promise<void>;
+  deleteAdminAccount: (adminId: string) => Promise<void>;
+  approveSeller: (sellerId: string) => Promise<void>;
+  rejectSeller: (sellerId: string) => Promise<void>;
+  addCategory: (payload: CategoryPayload) => Promise<void>;
+  addProduct: (payload: ProductUpsertPayload) => Promise<void>;
+  updateProduct: (
+    productId: string,
+    payload: ProductUpsertPayload,
+  ) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
+  addSellerProduct: (payload: SellerProductUpsertPayload) => Promise<void>;
+  updateSellerProduct: (
+    productId: string,
+    payload: SellerProductUpsertPayload,
+  ) => Promise<void>;
+  deleteSellerProduct: (productId: string) => Promise<void>;
+  reserveProduct: (
+    productId: string,
+    quantity: number,
+  ) => Promise<ReservationResult>;
+  markNotificationRead: (notificationId: string) => Promise<void>;
+  approveReservation: (reservationId: string) => Promise<void>;
+  rejectReservation: (reservationId: string) => Promise<void>;
+  confirmReservationDelivery: (reservationId: string) => Promise<void>;
+  enableBrowserNotifications: () => Promise<void>;
+  setCommissionPercent: (value: number) => Promise<void>;
   dismissToast: (toastId: string) => void;
 }
 
-const AppContext = createContext<AppContextValue | undefined>(undefined);
+type ApiUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "seller" | "staff";
+  sellerStatus?: "approved" | "pending" | "rejected";
+};
 
-const adminEmail = "admin@test.com";
-const adminPassword = "123456";
-const staffEmail = "staff@test.com";
-const staffPassword = "123456";
-const defaultProductImage =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
+type ApiCategory = {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type ApiSeller = {
+  id: string;
+  name: string;
+  email: string;
+  businessName: string;
+  phoneNumber?: string;
+  sellerStatus?: "approved" | "pending" | "rejected";
+  status?: "approved" | "pending" | "rejected";
+  joinedAt?: string;
+};
+
+type ApiAdminAccount = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt?: string;
+};
+
+type ApiProduct = {
+  id: string;
+  name: string;
+  price: string | number;
+  stock: number;
+  brand: string;
+  category: string;
+  categoryId: string;
+  imageUrl?: string;
+  createdAt: string;
+};
+
+type ApiSellerProduct = {
+  id: string;
+  sellerId?: string;
+  name: string;
+  price: string | number;
+  stock: number;
+  brand: string;
+  category: string;
+  categoryId: string;
+  imageUrl?: string;
+  createdAt: string;
+};
+
+type ApiReservation = {
+  id: string;
+  productId: string;
+  productName: string;
+  sellerId: string;
+  sellerName: string;
+  quantity: number;
+  baseTotal: string | number;
+  finalTotal: string | number;
+  discountPercent?: string | number;
+  status: "reserve" | "pending" | "approved" | "rejected" | "delivered";
+  createdAt: string;
+  deliveredAt?: string;
+  rejectedAt?: string;
+};
+
+type ApiNotification = {
+  id: string;
+  title: string;
+  message: string;
+  kind: string;
+  metadata?: Record<string, unknown>;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string;
+};
+
+type ApiSiteSettings = {
+  id: number;
+  commissionPercent: string | number;
+  contactPhone: string;
+  contactAddress: string;
+  businessHours: string;
+  tiktokUrl: string;
+  mapUrl: string;
+  heroTagline: string;
+  heroTitle: string;
+  heroDescription: string;
+  aboutTitle: string;
+  aboutDescription: string;
+  yearsExperience: number;
+  studentsTrained: number;
+  updatedAt?: string;
+};
+
+const defaultSiteSettings: SiteSettings = {
+  id: 1,
+  commissionPercent: 10,
+  contactPhone: "+1 (555) 900-1001",
+  contactAddress:
+    "Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11, Addis Ababa",
+  businessHours: "Monday - Saturday, 8:30 AM - 6:00 PM",
+  tiktokUrl: "https://www.tiktok.com/@dipcomtechnologies",
+  mapUrl:
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set",
+  heroTagline: "Stock Management & Reseller System",
+  heroTitle:
+    "Import printers, repair devices, and train teams with a premium business platform.",
+  heroDescription:
+    "This public landing page introduces the full service story behind the system: printer imports, repairs, training, and a modern reseller experience.",
+  aboutTitle:
+    "18 years of trusted printer importing, repair, and training expertise.",
+  aboutDescription:
+    "DIPCOM Technologies is a seasoned service provider with more than 18 years of experience in printer importing, printer repair, and practical training.",
+  yearsExperience: 18,
+  studentsTrained: 200,
+  updatedAt: undefined,
+};
+
 const initialAdmins: AdminAccount[] = [
   {
     id: "a1",
@@ -94,10 +255,225 @@ const initialAdmins: AdminAccount[] = [
   },
 ];
 
+const AppContext = createContext<AppContextValue | undefined>(undefined);
+const defaultProductImage =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
+const notificationDeviceStorageKey = "stock-notification-device-key";
+const notificationSeenStorageKey = "stock-notification-seen-ids";
+const notificationPromptStorageKey = "stock-notification-prompted";
 const makeId = () => crypto.randomUUID();
+
+function toNumber(value: string | number | undefined) {
+  return Number(value ?? 0);
+}
+
+function mapCategory(category: ApiCategory): Category {
+  return {
+    id: category.id,
+    name: category.name,
+    createdAt: category.createdAt,
+    updatedAt: category.updatedAt,
+  };
+}
+
+function mapProduct(product: ApiProduct): Product {
+  return {
+    id: product.id,
+    name: product.name,
+    price: toNumber(product.price),
+    stock: product.stock,
+    brand: product.brand,
+    category: product.category,
+    categoryId: product.categoryId,
+    imageUrl: product.imageUrl || defaultProductImage,
+    createdAt: product.createdAt,
+  };
+}
+
+function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
+  return {
+    id: product.id,
+    sellerId: product.sellerId ?? "",
+    name: product.name,
+    price: toNumber(product.price),
+    stock: product.stock,
+    brand: product.brand,
+    category: product.category,
+    categoryId: product.categoryId,
+    imageUrl: product.imageUrl || defaultProductImage,
+    createdAt: product.createdAt,
+  };
+}
+
+function mapSeller(seller: ApiSeller): Seller {
+  return {
+    id: seller.id,
+    name: seller.name,
+    email: seller.email,
+    businessName: seller.businessName,
+    phoneNumber: seller.phoneNumber || "+251900000000",
+    status: seller.sellerStatus ?? seller.status ?? "pending",
+    joinedAt:
+      seller.joinedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+  };
+}
+
+function mapAdminAccount(admin: ApiAdminAccount): AdminAccount {
+  return {
+    id: admin.id,
+    name: admin.name,
+    email: admin.email,
+    role: admin.role,
+    joinedAt:
+      admin.joinedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+  };
+}
+
+function mapReservation(reservation: ApiReservation): Reservation {
+  const normalizedStatus =
+    reservation.status === "reserve" ? "pending" : reservation.status;
+
+  return {
+    id: reservation.id,
+    productId: reservation.productId,
+    productName: reservation.productName,
+    sellerId: reservation.sellerId,
+    sellerName: reservation.sellerName,
+    quantity: reservation.quantity,
+    baseTotal: toNumber(reservation.baseTotal),
+    finalTotal: toNumber(reservation.finalTotal),
+    discountPercent:
+      reservation.discountPercent != null
+        ? toNumber(reservation.discountPercent)
+        : undefined,
+    status: normalizedStatus,
+    createdAt: reservation.createdAt,
+    deliveredAt: reservation.deliveredAt,
+    rejectedAt: reservation.rejectedAt,
+  };
+}
+
+function mapSiteSettings(settings: ApiSiteSettings): SiteSettings {
+  return {
+    id: settings.id,
+    commissionPercent: toNumber(settings.commissionPercent),
+    contactPhone: settings.contactPhone || defaultSiteSettings.contactPhone,
+    contactAddress:
+      settings.contactAddress || defaultSiteSettings.contactAddress,
+    businessHours: settings.businessHours || defaultSiteSettings.businessHours,
+    tiktokUrl: settings.tiktokUrl || defaultSiteSettings.tiktokUrl,
+    mapUrl: settings.mapUrl || defaultSiteSettings.mapUrl,
+    heroTagline: settings.heroTagline || defaultSiteSettings.heroTagline,
+    heroTitle: settings.heroTitle || defaultSiteSettings.heroTitle,
+    heroDescription:
+      settings.heroDescription || defaultSiteSettings.heroDescription,
+    aboutTitle: settings.aboutTitle || defaultSiteSettings.aboutTitle,
+    aboutDescription:
+      settings.aboutDescription || defaultSiteSettings.aboutDescription,
+    yearsExperience:
+      settings.yearsExperience ?? defaultSiteSettings.yearsExperience,
+    studentsTrained:
+      settings.studentsTrained ?? defaultSiteSettings.studentsTrained,
+    updatedAt: settings.updatedAt,
+  };
+}
+
+function supportsBrowserNotifications() {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+function getOrCreateNotificationDeviceKey() {
+  if (typeof window === "undefined") {
+    return "server-device";
+  }
+
+  const existingKey = window.localStorage.getItem(notificationDeviceStorageKey);
+  if (existingKey) {
+    return existingKey;
+  }
+
+  const generatedKey = crypto.randomUUID();
+  window.localStorage.setItem(notificationDeviceStorageKey, generatedKey);
+  return generatedKey;
+}
+
+function getSeenNotificationIds() {
+  if (typeof window === "undefined") {
+    return [] as string[];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(notificationSeenStorageKey);
+    if (!raw) {
+      return [] as string[];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [] as string[];
+    }
+
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [] as string[];
+  }
+}
+
+function saveSeenNotificationIds(ids: string[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(notificationSeenStorageKey, JSON.stringify(ids));
+}
+
+function hasPromptedForNotifications() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  return window.localStorage.getItem(notificationPromptStorageKey) === "true";
+}
+
+function markNotificationsPrompted() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(notificationPromptStorageKey, "true");
+}
+
+function base64UrlToUint8Array(base64UrlString: string) {
+  const paddingLength = (4 - (base64UrlString.length % 4)) % 4;
+  const base64 = `${base64UrlString}${"=".repeat(paddingLength)}`
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let index = 0; index < rawData.length; index += 1) {
+    outputArray[index] = rawData.charCodeAt(index);
+  }
+
+  return outputArray;
+}
+
+function buildCatalogFormData(payload: ProductUpsertPayload) {
+  const data = new FormData();
+  data.append("name", payload.name);
+  data.append("price", String(payload.price));
+  data.append("stock", String(payload.stock));
+  data.append("brand", payload.brand);
+  data.append("categoryId", payload.categoryId);
+  if (payload.imageFile) {
+    data.append("imageFile", payload.imageFile);
+  }
+  return data;
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>(
     initialSellerProducts,
@@ -107,8 +483,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     useState<AdminAccount[]>(initialAdmins);
   const [reservations, setReservations] =
     useState<Reservation[]>(initialReservations);
-  const [commissionPercent, setCommissionPercentState] = useState(10);
+  const [notifications, setNotifications] = useState<ApiNotification[]>([]);
+  const [commissionPercent, setCommissionPercentState] = useState(
+    defaultSiteSettings.commissionPercent,
+  );
+  const [siteSettings, setSiteSettings] =
+    useState<SiteSettings>(defaultSiteSettings);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const notificationDeviceKeyRef = useRef(getOrCreateNotificationDeviceKey());
+  const seenNotificationIdsRef = useRef<Set<string>>(
+    new Set(getSeenNotificationIds()),
+  );
+  const pushSetupInProgressRef = useRef<Promise<void> | null>(null);
 
   const pushToast = (
     title: string,
@@ -126,276 +513,640 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
   };
 
-  const login = (email: string, password: string): LoginResult => {
-    if (email === adminEmail && password === adminPassword) {
-      setCurrentUser({
-        role: "admin",
-        id: "admin",
-        name: "Platform Admin",
-        email,
-      });
-      pushToast("Welcome back", "Admin session started.", "success");
-      return { ok: true, message: "Admin login successful." };
+  const refreshPublicData = async () => {
+    try {
+      const [categoriesResponse, productsResponse, siteResponse] =
+        await Promise.all([
+          apiRequest<ApiCategory[]>("/catalog/categories/"),
+          apiRequest<ApiProduct[]>("/catalog/products/"),
+          apiRequest<ApiSiteSettings>("/site/settings/"),
+        ]);
+
+      setCategories(categoriesResponse.map(mapCategory));
+      setProducts(productsResponse.map(mapProduct));
+      const mappedSettings = mapSiteSettings(siteResponse);
+      setSiteSettings(mappedSettings);
+      setCommissionPercentState(mappedSettings.commissionPercent);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const refreshPrivateData = async (role?: AuthUser["role"] | null) => {
+    if (!role) {
+      return;
     }
 
-    if (email === staffEmail && password === staffPassword) {
-      setCurrentUser({
-        role: "staff",
-        id: "staff",
-        name: "Reservations Staff",
-        email,
-      });
-      pushToast(
-        "Welcome back",
-        "Staff session started with limited access.",
-        "success",
+    try {
+      if (role === "admin" || role === "staff") {
+        const [
+          sellersResponse,
+          adminsResponse,
+          reservationsResponse,
+          sellerProductsResponse,
+        ] = await Promise.all([
+          apiRequest<ApiSeller[]>("/accounts/sellers/"),
+          apiRequest<ApiAdminAccount[]>("/accounts/admins/"),
+          apiRequest<ApiReservation[]>("/reservations/reservations/"),
+          apiRequest<ApiSellerProduct[]>("/catalog/seller-products/"),
+        ]);
+
+        setSellers(sellersResponse.map(mapSeller));
+        setAdminAccounts(adminsResponse.map(mapAdminAccount));
+        setReservations(reservationsResponse.map(mapReservation));
+        setSellerProducts(sellerProductsResponse.map(mapSellerProduct));
+        return;
+      }
+
+      const [reservationsResponse, sellerProductsResponse] = await Promise.all([
+        apiRequest<ApiReservation[]>("/reservations/reservations/"),
+        apiRequest<ApiSellerProduct[]>("/catalog/seller-products/"),
+      ]);
+
+      setReservations(reservationsResponse.map(mapReservation));
+      setSellerProducts(sellerProductsResponse.map(mapSellerProduct));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const refreshForCurrentUser = async (role?: AuthUser["role"] | null) => {
+    await refreshPublicData();
+    await refreshPrivateData(role ?? currentUser?.role);
+  };
+
+  const registerNotificationDevice = async (
+    subscription?: Record<string, unknown>,
+  ) => {
+    if (!currentUser || typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      await apiRequest(
+        "/notifications/devices/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deviceKey: notificationDeviceKeyRef.current,
+            label: `${navigator.platform || "Browser"} device`,
+            platform: navigator.platform || navigator.userAgent,
+            userAgent: navigator.userAgent,
+            subscription: subscription ?? undefined,
+          }),
+        },
+        false,
       );
-      return { ok: true, message: "Staff login successful." };
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const registerBrowserPushSubscription = async (
+    promptForPermission: boolean,
+  ) => {
+    if (
+      !currentUser ||
+      typeof window === "undefined" ||
+      !supportsBrowserNotifications() ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    ) {
+      return;
     }
 
-    const seller = sellers.find(
-      (entry) => entry.email === email && entry.password === password,
-    );
-    if (!seller) {
-      return {
-        ok: false,
-        message: "Invalid credentials. Try the demo accounts.",
+    if (Notification.permission === "default") {
+      if (!promptForPermission || hasPromptedForNotifications()) {
+        return;
+      }
+
+      markNotificationsPrompted();
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        pushToast(
+          "Notifications disabled",
+          "Enable browser notifications to receive alerts.",
+          "warning",
+        );
+        return;
+      }
+    }
+
+    if (Notification.permission === "denied") {
+      pushToast(
+        "Notifications blocked",
+        "Allow notifications in your browser settings to receive alerts.",
+        "warning",
+      );
+      return;
+    }
+
+    if (pushSetupInProgressRef.current) {
+      try {
+        await pushSetupInProgressRef.current;
+      } catch (error) {
+        console.error(error);
+      }
+      return;
+    }
+
+    pushSetupInProgressRef.current = (async () => {
+      const registration = await navigator.serviceWorker.register(
+        "/notification-sw.js",
+      );
+      const { publicKey } = await apiRequest<{ publicKey: string }>(
+        "/notifications/push-key/",
+      );
+      const existingSubscription =
+        await registration.pushManager.getSubscription();
+      const subscription =
+        existingSubscription ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToUint8Array(publicKey),
+        }));
+
+      await registerNotificationDevice(
+        subscription.toJSON() as Record<string, unknown>,
+      );
+    })();
+
+    try {
+      await pushSetupInProgressRef.current;
+      await refreshNotifications();
+    } catch (error) {
+      console.error(error);
+      pushToast(
+        "Notifications unavailable",
+        "The browser push subscription could not be created.",
+        "warning",
+      );
+    } finally {
+      pushSetupInProgressRef.current = null;
+    }
+  };
+
+  const displayIncomingNotification = (notification: ApiNotification) => {
+    if (
+      supportsBrowserNotifications() &&
+      Notification.permission === "granted"
+    ) {
+      new Notification(notification.title, {
+        body: notification.message,
+      });
+      return;
+    }
+
+    pushToast(notification.title, notification.message, "info");
+  };
+
+  const refreshNotifications = async () => {
+    if (!currentUser) {
+      setUnreadNotificationCount(0);
+      setNotifications([]);
+      return;
+    }
+
+    try {
+      const [allNotificationsResponse, notificationsResponse] =
+        await Promise.all([
+          apiRequest<ApiNotification[]>("/notifications/list/"),
+          apiRequest<ApiNotification[]>("/notifications/inbox/"),
+        ]);
+
+      setNotifications(allNotificationsResponse);
+      setUnreadNotificationCount(notificationsResponse.length);
+
+      if (notificationsResponse.length === 0) {
+        return;
+      }
+
+      const unseenNotifications = notificationsResponse.filter(
+        (notification) => !seenNotificationIdsRef.current.has(notification.id),
+      );
+
+      unseenNotifications.forEach((notification) => {
+        seenNotificationIdsRef.current.add(notification.id);
+        displayIncomingNotification(notification);
+      });
+
+      saveSeenNotificationIds([...seenNotificationIdsRef.current]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const enableBrowserNotifications = async () => {
+    if (!supportsBrowserNotifications()) {
+      pushToast(
+        "Notifications unavailable",
+        "This browser does not support browser notifications.",
+        "warning",
+      );
+      return;
+    }
+
+    try {
+      await registerBrowserPushSubscription(true);
+      if (Notification.permission === "granted") {
+        pushToast(
+          "Notifications enabled",
+          "You will receive browser alerts for key updates.",
+          "success",
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to enable notifications.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrate = async () => {
+      await refreshPublicData();
+
+      const refreshToken = getStoredRefreshToken();
+      if (!refreshToken) {
+        return;
+      }
+
+      try {
+        const userResponse = await apiRequest<ApiUser>("/accounts/me/");
+        if (cancelled) {
+          return;
+        }
+
+        const user: AuthUser = {
+          id: userResponse.id,
+          name: userResponse.name,
+          email: userResponse.email,
+          role: userResponse.role,
+          sellerStatus: userResponse.sellerStatus,
+        };
+
+        setCurrentUser(user);
+        await refreshPrivateData(user.role);
+      } catch (error) {
+        console.error(error);
+        clearStoredTokens();
+      }
+    };
+
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadNotificationCount(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncNotifications = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      const shouldPromptForNotifications =
+        supportsBrowserNotifications() &&
+        Notification.permission === "default" &&
+        !hasPromptedForNotifications();
+
+      if (shouldPromptForNotifications) {
+        await enableBrowserNotifications();
+      } else {
+        await registerBrowserPushSubscription(false);
+      }
+
+      await refreshNotifications();
+    };
+
+    void syncNotifications();
+
+    const intervalId = window.setInterval(() => {
+      void refreshNotifications();
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [currentUser?.id]);
+
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<LoginResult> => {
+    try {
+      const response = await apiRequest<{
+        refresh: string;
+        access: string;
+        user: ApiUser;
+      }>(
+        "/accounts/login/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+        false,
+      );
+
+      storeTokens(response.access, response.refresh);
+      const user: AuthUser = {
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role,
+        sellerStatus: response.user.sellerStatus,
       };
-    }
 
-    if (seller.status !== "approved") {
+      setCurrentUser(user);
+      await refreshForCurrentUser(user.role);
+      pushToast("Welcome back", `${user.role} session started.`, "success");
+
       return {
-        ok: false,
-        message: `Your account is ${seller.status}. Please wait for admin approval.`,
+        ok: true,
+        message: `${user.role} login successful.`,
+        role: user.role,
+        sellerStatus: user.sellerStatus,
       };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Login failed.";
+      return { ok: false, message };
     }
-
-    setCurrentUser({
-      role: "seller",
-      id: seller.id,
-      name: seller.name,
-      email: seller.email,
-    });
-    pushToast(
-      "Welcome back",
-      `Seller dashboard ready for ${seller.businessName}.`,
-      "success",
-    );
-    return { ok: true, message: "Seller login successful." };
   };
 
   const logout = () => {
+    clearStoredTokens();
     setCurrentUser(null);
     pushToast("Signed out", "Session closed securely.", "info");
   };
 
-  const registerSeller = ({
+  const registerSeller = async ({
     name,
     email,
     businessName,
+    phoneNumber,
     password,
-  }: RegisterPayload) => {
-    setSellers((prev) => [
-      {
-        id: makeId(),
-        name,
-        email,
-        businessName,
-        password,
-        status: "pending",
-        joinedAt: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ]);
-    pushToast(
-      "Application received",
-      "Your seller account is pending approval.",
-      "info",
-    );
-  };
+  }: RegisterPayload): Promise<LoginResult> => {
+    try {
+      await apiRequest(
+        "/accounts/register/seller/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            businessName,
+            phoneNumber,
+            password,
+          }),
+        },
+        false,
+      );
 
-  const registerAdmin = ({ name, email, role }: AdminRegisterPayload) => {
-    setAdminAccounts((prev) => [
-      {
-        id: makeId(),
-        name,
-        email,
-        role,
-        joinedAt: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ]);
-    pushToast(
-      "Admin registered",
-      `${name} was added as a new admin account.`,
-      "success",
-    );
-  };
-
-  const deleteAdminAccount = (adminId: string) => {
-    const target = adminAccounts.find((admin) => admin.id === adminId);
-    if (!target) {
-      return;
-    }
-
-    if (adminAccounts.length <= 1) {
+      await refreshPublicData();
       pushToast(
-        "Action blocked",
-        "At least one admin account must remain on the platform.",
+        "Application received",
+        "Your seller account is pending approval.",
+        "info",
+      );
+      return { ok: true, message: "Seller registration submitted." };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Registration failed.";
+      return { ok: false, message };
+    }
+  };
+
+  const registerAdmin = async ({
+    name,
+    email,
+    roleType,
+    password,
+  }: AdminRegisterPayload) => {
+    try {
+      await apiRequest("/accounts/admins/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, roleType, password }),
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Admin registered",
+        `${name} can now log in to the platform.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to register admin.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const deleteAdminAccount = async (adminId: string) => {
+    try {
+      await apiRequest(`/accounts/admins/${adminId}/`, { method: "DELETE" });
+      await refreshPrivateData(currentUser?.role);
+      pushToast("Admin removed", "The admin account was deleted.", "warning");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to remove admin.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const approveSeller = async (sellerId: string) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/approve/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast("Seller approved", "The seller can now log in.", "success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to approve seller.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const rejectSeller = async (sellerId: string) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/reject/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Seller rejected",
+        "The seller application was declined.",
         "warning",
       );
-      return;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to reject seller.";
+      pushToast("Action failed", message, "warning");
     }
-
-    setAdminAccounts((prev) => prev.filter((admin) => admin.id !== adminId));
-    pushToast(
-      "Admin removed",
-      `${target.name} was removed from admin accounts.`,
-      "warning",
-    );
   };
 
-  const approveSeller = (sellerId: string) => {
-    setSellers((prev) =>
-      prev.map((seller) =>
-        seller.id === sellerId ? { ...seller, status: "approved" } : seller,
-      ),
-    );
-    pushToast("Seller approved", "The seller can now log in.", "success");
+  const addCategory = async ({ name }: CategoryPayload) => {
+    try {
+      await apiRequest("/catalog/categories/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      await refreshPublicData();
+      pushToast(
+        "Category added",
+        `${name} is now available in the catalog.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to add category.";
+      pushToast("Action failed", message, "warning");
+    }
   };
 
-  const rejectSeller = (sellerId: string) => {
-    setSellers((prev) =>
-      prev.map((seller) =>
-        seller.id === sellerId ? { ...seller, status: "rejected" } : seller,
-      ),
-    );
-    pushToast(
-      "Seller rejected",
-      "The seller application was declined.",
-      "warning",
-    );
+  const addProduct = async (payload: ProductUpsertPayload) => {
+    try {
+      await apiRequest("/catalog/products/", {
+        method: "POST",
+        body: buildCatalogFormData(payload),
+      });
+      await refreshForCurrentUser();
+      pushToast(
+        "Product added",
+        `${payload.name} is now in inventory.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to add product.";
+      pushToast("Action failed", message, "warning");
+    }
   };
 
-  const addProduct = (payload: Omit<Product, "id" | "createdAt">) => {
-    setProducts((prev) => [
-      {
-        ...payload,
-        imageUrl: payload.imageUrl ?? defaultProductImage,
-        id: makeId(),
-        createdAt: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ]);
-    pushToast(
-      "Product added",
-      `${payload.name} is now in inventory.`,
-      "success",
-    );
+  const updateProduct = async (
+    productId: string,
+    payload: ProductUpsertPayload,
+  ) => {
+    try {
+      await apiRequest(`/catalog/products/${productId}/`, {
+        method: "PATCH",
+        body: buildCatalogFormData(payload),
+      });
+      await refreshForCurrentUser();
+      pushToast(
+        "Product updated",
+        `${payload.name} details were saved.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update product.";
+      pushToast("Action failed", message, "warning");
+    }
   };
 
-  const updateProduct = (payload: Product) => {
-    setProducts((prev) =>
-      prev.map((product) => (product.id === payload.id ? payload : product)),
-    );
-    pushToast(
-      "Product updated",
-      `${payload.name} details were saved.`,
-      "success",
-    );
-  };
-
-  const deleteProduct = (productId: string) => {
-    const item = products.find((product) => product.id === productId);
-    setProducts((prev) => prev.filter((product) => product.id !== productId));
-    if (item) {
+  const deleteProduct = async (productId: string) => {
+    try {
+      await apiRequest(`/catalog/products/${productId}/`, { method: "DELETE" });
+      await refreshForCurrentUser();
       pushToast(
         "Product removed",
-        `${item.name} was deleted from inventory.`,
+        "The product was deleted from inventory.",
         "warning",
       );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to delete product.";
+      pushToast("Action failed", message, "warning");
     }
   };
 
-  const addSellerProduct = (
-    payload: Omit<SellerProduct, "id" | "createdAt" | "sellerId">,
+  const addSellerProduct = async (payload: SellerProductUpsertPayload) => {
+    try {
+      await apiRequest("/catalog/seller-products/", {
+        method: "POST",
+        body: buildCatalogFormData(payload),
+      });
+      await refreshForCurrentUser();
+      pushToast(
+        "My stock updated",
+        `${payload.name} was added to your stock list.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to add seller product.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const updateSellerProduct = async (
+    productId: string,
+    payload: SellerProductUpsertPayload,
   ) => {
-    if (!currentUser || currentUser.role !== "seller") {
-      return;
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/`, {
+        method: "PATCH",
+        body: buildCatalogFormData(payload),
+      });
+      await refreshForCurrentUser();
+      pushToast(
+        "My stock updated",
+        `${payload.name} details were saved.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to update seller product.";
+      pushToast("Action failed", message, "warning");
     }
-
-    setSellerProducts((prev) => [
-      {
-        ...payload,
-        imageUrl: payload.imageUrl ?? defaultProductImage,
-        id: makeId(),
-        sellerId: currentUser.id,
-        createdAt: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ]);
-
-    pushToast(
-      "My stock updated",
-      `${payload.name} was added to your stock list.`,
-      "success",
-    );
   };
 
-  const updateSellerProduct = (payload: SellerProduct) => {
-    if (!currentUser || currentUser.role !== "seller") {
-      return;
+  const deleteSellerProduct = async (productId: string) => {
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/`, {
+        method: "DELETE",
+      });
+      await refreshForCurrentUser();
+      pushToast(
+        "My stock updated",
+        "The item was removed from your stock list.",
+        "warning",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to delete seller product.";
+      pushToast("Action failed", message, "warning");
     }
-
-    setSellerProducts((prev) =>
-      prev.map((product) => {
-        if (product.id !== payload.id || product.sellerId !== currentUser.id) {
-          return product;
-        }
-
-        return payload;
-      }),
-    );
-
-    pushToast(
-      "My stock updated",
-      `${payload.name} details were saved.`,
-      "success",
-    );
   };
 
-  const deleteSellerProduct = (productId: string) => {
-    if (!currentUser || currentUser.role !== "seller") {
-      return;
-    }
-
-    const target = sellerProducts.find(
-      (product) =>
-        product.id === productId && product.sellerId === currentUser.id,
-    );
-
-    if (!target) {
-      return;
-    }
-
-    setSellerProducts((prev) =>
-      prev.filter(
-        (product) =>
-          !(product.id === productId && product.sellerId === currentUser.id),
-      ),
-    );
-
-    pushToast(
-      "My stock updated",
-      `${target.name} was removed from your stock list.`,
-      "warning",
-    );
-  };
-
-  const reserveProduct = (
+  const reserveProduct = async (
     productId: string,
     quantity: number,
-  ): ReservationResult => {
+  ): Promise<ReservationResult> => {
     if (!currentUser || currentUser.role !== "seller") {
       return {
         ok: false,
@@ -403,119 +1154,127 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const selected = products.find((product) => product.id === productId);
-    if (!selected) {
-      return { ok: false, message: "Product not found." };
-    }
-
-    if (quantity < 1) {
-      return { ok: false, message: "Quantity must be at least 1." };
-    }
-
-    if (selected.stock < quantity) {
-      return { ok: false, message: "Insufficient stock for this reservation." };
-    }
-
-    setProducts((prev) =>
-      prev.map((product) =>
-        product.id === productId
-          ? {
-              ...product,
-              stock: product.stock - quantity,
-            }
-          : product,
-      ),
-    );
-
-    const baseTotal = selected.price * quantity;
-    const finalTotal = baseTotal * (1 - commissionPercent / 100);
-
-    setReservations((prev) => [
-      {
-        id: makeId(),
-        productId,
-        productName: selected.name,
-        sellerId: currentUser.id,
-        sellerName: currentUser.name,
-        quantity,
-        baseTotal,
-        finalTotal,
-        status: "active",
-        createdAt: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-
-    pushToast(
-      "Reservation successful",
-      `${selected.name} reserved successfully.`,
-      "success",
-    );
-
-    if (selected.stock - quantity <= 3) {
+    try {
+      await apiRequest("/reservations/reservations/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity }),
+      });
+      await refreshForCurrentUser(currentUser.role);
       pushToast(
-        "Low stock warning",
-        `${selected.name} is reaching low stock levels.`,
+        "Reservation successful",
+        "The product was reserved successfully.",
+        "success",
+      );
+      return { ok: true, message: "Reservation completed." };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Reservation failed.";
+      return { ok: false, message };
+    }
+  };
+
+  const markNotificationRead = async (notificationId: string) => {
+    try {
+      await apiRequest("/notifications/mark-read/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [notificationId] }),
+      });
+      await refreshNotifications();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const approveReservation = async (reservationId: string) => {
+    try {
+      await apiRequest(`/reservations/reservations/${reservationId}/approve/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Reservation approved",
+        "The reservation is now approved.",
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to approve reservation.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const rejectReservation = async (reservationId: string) => {
+    try {
+      await apiRequest(`/reservations/reservations/${reservationId}/reject/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Reservation rejected",
+        "The reservation was rejected and moved to history.",
         "warning",
       );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to reject reservation.";
+      pushToast("Action failed", message, "warning");
     }
-
-    return { ok: true, message: "Reservation completed." };
   };
 
-  const confirmReservationDelivery = (reservationId: string) => {
-    setReservations((prev) =>
-      prev.map((reservation) =>
-        reservation.id === reservationId
-          ? {
-              ...reservation,
-              status: "delivered",
-              deliveredAt: new Date().toISOString(),
-            }
-          : reservation,
-      ),
-    );
-    pushToast(
-      "Delivery confirmed",
-      "The reservation was moved to history.",
-      "success",
-    );
+  const confirmReservationDelivery = async (reservationId: string) => {
+    try {
+      await apiRequest(`/reservations/reservations/${reservationId}/deliver/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Delivery confirmed",
+        "The reservation was moved to history.",
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to confirm delivery.";
+      pushToast("Action failed", message, "warning");
+    }
   };
 
-  const removeReservation = (reservationId: string) => {
-    setReservations((prev) =>
-      prev.map((reservation) =>
-        reservation.id === reservationId
-          ? {
-              ...reservation,
-              status: "removed",
-              removedAt: new Date().toISOString(),
-            }
-          : reservation,
-      ),
-    );
-    pushToast(
-      "Reservation removed",
-      "The reservation was archived from the active queue.",
-      "warning",
-    );
-  };
-
-  const setCommissionPercent = (value: number) => {
-    setCommissionPercentState(value);
-    pushToast("Discount updated", `Discount is now ${value}%.`, "info");
+  const setCommissionPercent = async (value: number) => {
+    try {
+      await apiRequest("/site/settings/1/", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commissionPercent: value }),
+      });
+      await refreshPublicData();
+      pushToast("Discount updated", `Discount is now ${value}%.`, "info");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update discount.";
+      pushToast("Action failed", message, "warning");
+    }
   };
 
   const value = useMemo(
     () => ({
       currentUser,
+      categories,
       products,
       sellerProducts,
       sellers,
       adminAccounts,
       reservations,
+      notifications,
       commissionPercent,
+      siteSettings,
       toasts,
+      unreadNotificationCount,
       login,
       logout,
       registerSeller,
@@ -523,6 +1282,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteAdminAccount,
       approveSeller,
       rejectSeller,
+      addCategory,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -530,20 +1290,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateSellerProduct,
       deleteSellerProduct,
       reserveProduct,
+      markNotificationRead,
+      approveReservation,
+      rejectReservation,
       confirmReservationDelivery,
-      removeReservation,
+      enableBrowserNotifications,
       setCommissionPercent,
       dismissToast,
     }),
     [
       currentUser,
+      categories,
       products,
       sellerProducts,
       sellers,
       adminAccounts,
       reservations,
+      notifications,
       commissionPercent,
+      siteSettings,
       toasts,
+      unreadNotificationCount,
     ],
   );
 

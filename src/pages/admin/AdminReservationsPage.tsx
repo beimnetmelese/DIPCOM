@@ -16,21 +16,29 @@ import { useAppContext } from "../../context/AppContext.tsx";
 import { currency, readableDate } from "../../utils/format.ts";
 
 export function AdminReservationsPage() {
-  const { reservations, confirmReservationDelivery, removeReservation } =
-    useAppContext();
+  const {
+    reservations,
+    approveReservation,
+    rejectReservation,
+    confirmReservationDelivery,
+  } = useAppContext();
   const [query, setQuery] = useState("");
   const [confirmation, setConfirmation] = useState<{
     reservationId: string;
-    action: "deliver" | "remove";
+    action: "approve" | "reject" | "deliver";
   } | null>(null);
 
   const activeReservations = useMemo(
     () =>
       reservations
-        .filter((reservation) => reservation.status === "active")
+        .filter(
+          (reservation) =>
+            reservation.status === "pending" ||
+            reservation.status === "approved",
+        )
         .filter((reservation) => {
           const searchable =
-            `${reservation.sellerName} ${reservation.productName} ${reservation.quantity}`.toLowerCase();
+            `${reservation.sellerName} ${reservation.productName} ${reservation.quantity} ${reservation.status}`.toLowerCase();
           return searchable.includes(query.toLowerCase());
         })
         .sort(
@@ -40,27 +48,37 @@ export function AdminReservationsPage() {
     [query, reservations],
   );
 
+  const pendingCount = reservations.filter(
+    (reservation) => reservation.status === "pending",
+  ).length;
+  const approvedCount = reservations.filter(
+    (reservation) => reservation.status === "approved",
+  ).length;
   const deliveredCount = reservations.filter(
     (reservation) => reservation.status === "delivered",
-  ).length;
-  const removedCount = reservations.filter(
-    (reservation) => reservation.status === "removed",
-  ).length;
-  const activeCount = reservations.filter(
-    (reservation) => reservation.status === "active",
   ).length;
   const queueValue = activeReservations.reduce(
     (sum, reservation) => sum + reservation.finalTotal,
     0,
   );
 
-  const runAction = (reservationId: string, action: "deliver" | "remove") => {
-    if (action === "deliver") {
-      confirmReservationDelivery(reservationId);
+  const runAction = (
+    reservationId: string,
+    action: "approve" | "reject" | "deliver",
+  ) => {
+    if (action === "approve") {
+      approveReservation(reservationId);
       return;
     }
 
-    removeReservation(reservationId);
+    if (action === "reject") {
+      rejectReservation(reservationId);
+      return;
+    }
+
+    if (action === "deliver") {
+      confirmReservationDelivery(reservationId);
+    }
   };
 
   return (
@@ -73,40 +91,33 @@ export function AdminReservationsPage() {
               <Truck className="h-4 w-4" /> Reservations queue
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Review active reservations and confirm delivery with a premium
+              Process reservation flow from pending to delivery with a premium
               workflow.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-              Confirm delivery to archive reservations into history, or remove a
-              reservation if it should not proceed.
+              Move each reservation through pending, approved, then delivered.
             </p>
           </div>
         </div>
       </section>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
-          title="Active Queue"
-          value={String(activeCount)}
-          note="Waiting for action"
-          icon={<Clock3 className="h-5 w-5" />}
+          title="Pending"
+          value={String(pendingCount)}
+          note="New reservation requests"
+          icon={<CheckCircle2 className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Approved"
+          value={String(approvedCount)}
+          note="Ready for delivery"
+          icon={<Warehouse className="h-5 w-5" />}
         />
         <StatCard
           title="Delivered"
           value={String(deliveredCount)}
-          note="Moved to history"
-          icon={<CheckCircle2 className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Removed"
-          value={String(removedCount)}
-          note="Archived records"
-          icon={<Warehouse className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Queue Value"
-          value={currency(queueValue)}
-          note="Total active reservations"
+          note="Completed reservations"
           icon={<ArrowRight className="h-5 w-5" />}
         />
       </div>
@@ -118,12 +129,12 @@ export function AdminReservationsPage() {
               Reservations
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Search reservation by seller name or product name.
+              Process each reservation through pending, approved, and delivered.
             </p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-            <LoaderCircle className="h-4 w-4" /> {activeReservations.length}{" "}
-            active
+            <LoaderCircle className="h-4 w-4" /> {activeReservations.length} in
+            queue
           </span>
         </div>
 
@@ -156,7 +167,7 @@ export function AdminReservationsPage() {
                   </p>
                 </div>
                 <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                  Active
+                  {reservation.status}
                 </span>
               </div>
 
@@ -188,37 +199,69 @@ export function AdminReservationsPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirmation({
-                      reservationId: reservation.id,
-                      action: "deliver",
-                    })
-                  }
-                  className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                >
-                  Confirm delivery
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirmation({
-                      reservationId: reservation.id,
-                      action: "remove",
-                    })
-                  }
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                >
-                  Remove reservation
-                </button>
+                {reservation.status === "pending" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmation({
+                          reservationId: reservation.id,
+                          action: "approve",
+                        })
+                      }
+                      className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                    >
+                      Approve reservation
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmation({
+                          reservationId: reservation.id,
+                          action: "reject",
+                        })
+                      }
+                      className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : null}
+                {reservation.status === "approved" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmation({
+                          reservationId: reservation.id,
+                          action: "deliver",
+                        })
+                      }
+                      className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      Confirm delivery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmation({
+                          reservationId: reservation.id,
+                          action: "reject",
+                        })
+                      }
+                      className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : null}
               </div>
             </article>
           ))}
 
           {activeReservations.length === 0 ? (
             <div className="rounded-[1.75rem] border border-dashed border-orange-200 bg-orange-50/50 p-8 text-center text-sm text-slate-500 lg:col-span-2">
-              No active reservations found.
+              No queued reservations found.
             </div>
           ) : null}
         </div>
@@ -228,9 +271,11 @@ export function AdminReservationsPage() {
         open={Boolean(confirmation)}
         onClose={() => setConfirmation(null)}
         title={
-          confirmation?.action === "deliver"
-            ? "Confirm Delivery"
-            : "Remove Reservation"
+          confirmation?.action === "approve"
+            ? "Approve Reservation"
+            : confirmation?.action === "reject"
+              ? "Reject Reservation"
+              : "Confirm Delivery"
         }
       >
         <div className="grid gap-4">
@@ -241,14 +286,18 @@ export function AdminReservationsPage() {
               </div>
               <div>
                 <p className="font-semibold text-slate-900">
-                  {confirmation?.action === "deliver"
-                    ? "Are you sure you want to confirm delivery?"
-                    : "Are you sure you want to remove this reservation?"}
+                  {confirmation?.action === "approve"
+                    ? "Approve this reservation now?"
+                    : confirmation?.action === "reject"
+                      ? "Reject this reservation?"
+                      : "Are you sure you want to confirm delivery?"}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {confirmation?.action === "deliver"
-                    ? "This reservation will be moved from the active queue into the history page."
-                    : "This reservation will be archived out of the active queue."}
+                  {confirmation?.action === "approve"
+                    ? "Status will change from pending to approved."
+                    : confirmation?.action === "reject"
+                      ? "Status will change to rejected and move to history."
+                      : "Status will change from approved to delivered and move to history."}
                 </p>
               </div>
             </div>
@@ -271,15 +320,14 @@ export function AdminReservationsPage() {
                 setConfirmation(null);
               }}
               className={`rounded-xl px-4 py-2 text-sm font-semibold text-white ${
-                confirmation?.action === "deliver"
-                  ? "bg-emerald-600"
-                  : "bg-rose-600"
+                confirmation?.action === "approve"
+                  ? "bg-indigo-600"
+                  : confirmation?.action === "reject"
+                    ? "bg-rose-600"
+                    : "bg-emerald-600"
               }`}
             >
-              Yes,{" "}
-              {confirmation?.action === "deliver"
-                ? "confirm delivery"
-                : "remove"}
+              Yes, {confirmation?.action}
             </button>
           </div>
         </div>

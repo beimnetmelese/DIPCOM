@@ -8,7 +8,7 @@ import type { Product } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
 export function ShopPage() {
-  const { products } = useAppContext();
+  const { categories, products } = useAppContext();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [brand, setBrand] = useState("all");
@@ -21,13 +21,18 @@ export function ShopPage() {
     [products],
   );
 
+  const categoryChoices = useMemo(
+    () => categories.filter((item) => item.id && item.name),
+    [categories],
+  );
+
   const shopProducts = useMemo(() => {
     const filtered = products.filter((product) => {
       const searchable =
         `${product.name} ${product.brand} ${product.category}`.toLowerCase();
       const matchesQuery = searchable.includes(query.toLowerCase());
       const matchesCategory =
-        category === "all" || product.category === category;
+        category === "all" || product.categoryId === category;
       const matchesBrand = brand === "all" || product.brand === brand;
       const matchesAvailability =
         availability === "all" ||
@@ -95,8 +100,11 @@ export function ShopPage() {
             className="rounded-xl border border-orange-200 px-3 py-2 text-sm"
           >
             <option value="all">All Categories</option>
-            <option value="Printers">Printers</option>
-            <option value="Accessories">Accessories</option>
+            {categoryChoices.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
           </select>
 
           <select

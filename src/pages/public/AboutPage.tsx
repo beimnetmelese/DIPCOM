@@ -11,6 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { useAppContext } from "../../context/AppContext.tsx";
 
 const stats = [
   { value: "18+", label: "Years of experience" },
@@ -47,6 +48,8 @@ const galleryPhotos = [
 ];
 
 export function AboutPage() {
+  const { siteSettings } = useAppContext();
+
   return (
     <AnimatedPage>
       <section className="relative -mx-3 -mt-20 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft sm:-mx-4 lg:-mx-6">
@@ -66,25 +69,20 @@ export function AboutPage() {
               <PackageCheck className="h-4 w-4" /> About DIPCOM Technologies
             </p>
             <h1 className="mt-4 max-w-2xl font-heading text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-              18 years of trusted printer importing, repair, and training
-              expertise.
+              {siteSettings.aboutTitle}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-white/88 sm:text-lg">
-              DIPCOM Technologies is a seasoned service provider with more than
-              18 years of experience in printer importing, printer repair, and
-              practical training. They also support schools and learning
-              environments, with more than 200 students benefiting from their
-              training and technology support.
+              {siteSettings.aboutDescription}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                <Award className="h-4 w-4 text-orange-300" /> 18+ years
-                experience
+                <Award className="h-4 w-4 text-orange-300" />{" "}
+                {siteSettings.yearsExperience}+ years experience
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                <Users className="h-4 w-4 text-orange-300" /> 200+ students
-                trained
+                <Users className="h-4 w-4 text-orange-300" />{" "}
+                {siteSettings.studentsTrained}+ students trained
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
                 <Sparkles className="h-4 w-4 text-orange-300" /> Premium service

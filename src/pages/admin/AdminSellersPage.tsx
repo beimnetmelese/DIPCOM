@@ -23,7 +23,7 @@ export function AdminSellersPage() {
   const filteredSellers = useMemo(() => {
     return [...sellers]
       .filter((seller) =>
-        `${seller.name} ${seller.businessName} ${seller.email}`
+        `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber}`
           .toLowerCase()
           .includes(query.toLowerCase()),
       )
@@ -149,6 +149,9 @@ export function AdminSellersPage() {
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
                     {seller.name} · {seller.email}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {seller.phoneNumber}
                   </p>
                 </div>
                 <span

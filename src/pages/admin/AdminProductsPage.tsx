@@ -3,16 +3,42 @@ import { AlertTriangle, Download, ImagePlus, Search, Plus } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
-import { Product } from "../../types.ts";
+import { Category, Product } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
 const emptyForm = {
   name: "",
-  price: 0,
-  stock: 0,
+  priceInput: "",
+  stockInput: "",
   brand: "",
-  category: "Printers",
-  imageUrl: "",
+  categoryId: "",
+  imageFile: null as File | null,
+};
+
+const normalizeIntegerInput = (value: string) =>
+  value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+
+const normalizeDecimalInput = (value: string) => {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  const firstDotIndex = cleaned.indexOf(".");
+  const normalized =
+    firstDotIndex === -1
+      ? cleaned
+      : `${cleaned.slice(0, firstDotIndex + 1)}${cleaned
+          .slice(firstDotIndex + 1)
+          .replace(/\./g, "")}`;
+
+  if (normalized.startsWith(".")) {
+    return `0${normalized}`;
+  }
+
+  if (normalized.includes(".")) {
+    const [intPart, decimalPart] = normalized.split(".");
+    const safeInt = intPart.replace(/^0+(?=\d)/, "");
+    return `${safeInt}.${decimalPart}`;
+  }
+
+  return normalized.replace(/^0+(?=\d)/, "");
 };
 
 const escapeXml = (value: string) =>
@@ -24,8 +50,15 @@ const escapeXml = (value: string) =>
     .replace(/'/g, "&apos;");
 
 export function AdminProductsPage() {
-  const { currentUser, products, addProduct, updateProduct, deleteProduct } =
-    useAppContext();
+  const {
+    currentUser,
+    categories,
+    products,
+    addCategory,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+  } = useAppContext();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -34,7 +67,15 @@ export function AdminProductsPage() {
   const [category, setCategory] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [categoryName, setCategoryName] = useState("");
   const isReadOnly = currentUser?.role === "staff";
+  const canManageCategories =
+    currentUser?.role === "admin" || currentUser?.role === "staff";
+
+  const categoryChoices = useMemo(
+    () => categories.filter((item) => item.id && item.name),
+    [categories],
+  );
 
   const actionTitle = useMemo(
     () => (editing ? "Edit Product" : "Add Product"),
@@ -47,7 +88,7 @@ export function AdminProductsPage() {
         `${product.name} ${product.brand} ${product.category}`.toLowerCase();
       const matchesQuery = searchable.includes(query.toLowerCase());
       const matchesCategory =
-        category === "all" || product.category === category;
+        category === "all" || product.categoryId === category;
       const matchesStock =
         stockFilter === "all" ||
         (stockFilter === "low" && product.stock > 0 && product.stock <= 3) ||
@@ -60,7 +101,10 @@ export function AdminProductsPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      categoryId: categoryChoices[0]?.id ?? "",
+    });
     setImagePreview("");
     setOpen(true);
   };
@@ -69,11 +113,11 @@ export function AdminProductsPage() {
     setEditing(product);
     setForm({
       name: product.name,
-      price: product.price,
-      stock: product.stock,
+      priceInput: String(product.price),
+      stockInput: String(product.stock),
       brand: product.brand,
-      category: product.category,
-      imageUrl: product.imageUrl ?? "",
+      categoryId: product.categoryId,
+      imageFile: null,
     });
     setImagePreview(product.imageUrl ?? "");
     setOpen(true);
@@ -85,23 +129,56 @@ export function AdminProductsPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setForm((prev) => ({ ...prev, imageUrl: result }));
-      setImagePreview(result);
-    };
-    reader.readAsDataURL(file);
+    setForm((prev) => ({ ...prev, imageFile: file }));
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const parsedPrice = Number(form.priceInput);
+    const parsedStock = Number(form.stockInput);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      return;
+    }
+
+    if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+      return;
+    }
+
+    const selectedCategory = categoryChoices.find(
+      (item) => item.id === form.categoryId,
+    );
+    if (!selectedCategory) {
+      return;
+    }
+
+    const payload = {
+      name: form.name,
+      price: parsedPrice,
+      stock: parsedStock,
+      brand: form.brand,
+      categoryId: form.categoryId,
+      imageFile: form.imageFile,
+      category: selectedCategory.name,
+    };
+
     if (editing) {
-      updateProduct({ ...editing, ...form });
+      await updateProduct(editing.id, payload);
     } else {
-      addProduct(form);
+      await addProduct(payload);
     }
     setOpen(false);
+  };
+
+  const handleCategoryCreate = async () => {
+    const nextName = categoryName.trim();
+    if (!nextName) {
+      return;
+    }
+
+    await addCategory({ name: nextName });
+    setCategoryName("");
   };
 
   const exportAsExcel = () => {
@@ -195,8 +272,11 @@ export function AdminProductsPage() {
             className="rounded-xl border border-orange-200 px-3 py-2 text-sm"
           >
             <option value="all">All Categories</option>
-            <option value="Printers">Printers</option>
-            <option value="Accessories">Accessories</option>
+            {categoryChoices.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
           </select>
           <select
             value={stockFilter}
@@ -210,6 +290,46 @@ export function AdminProductsPage() {
           </select>
         </div>
       </section>
+
+      {canManageCategories ? (
+        <section className="mt-4 rounded-3xl border border-orange-100 bg-white p-4 shadow-soft">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                Category manager
+              </p>
+              <p className="text-xs text-slate-500">
+                Add new catalog categories for products and seller stock.
+              </p>
+            </div>
+            <div className="flex flex-1 flex-wrap items-center gap-2 sm:max-w-lg">
+              <input
+                value={categoryName}
+                onChange={(event) => setCategoryName(event.target.value)}
+                placeholder="New category name"
+                className="min-w-0 flex-1 rounded-xl border border-orange-200 px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleCategoryCreate}
+                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Add Category
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categoryChoices.map((item: Category) => (
+              <span
+                key={item.id}
+                className="rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
+              >
+                {item.name}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         {[
@@ -251,7 +371,63 @@ export function AdminProductsPage() {
         ))}
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-3xl border border-orange-100">
+      <div className="mt-4 grid gap-3 md:hidden">
+        {filteredProducts.map((product) => (
+          <article
+            key={product.id}
+            className="rounded-2xl border border-orange-100 bg-white p-4 shadow-soft"
+          >
+            <div className="flex items-start gap-3">
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="h-16 w-16 rounded-xl border border-orange-100 object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-slate-900">
+                  {product.name}
+                </p>
+                <p className="text-sm text-slate-500">{product.brand}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+                  {product.category}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-xl bg-orange-50 px-3 py-2">
+                <p className="text-xs text-slate-500">Price</p>
+                <p className="font-semibold text-slate-900">
+                  {currency(product.price)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-orange-50 px-3 py-2">
+                <p className="text-xs text-slate-500">Stock</p>
+                <p className="font-semibold text-slate-900">{product.stock}</p>
+              </div>
+            </div>
+            {!isReadOnly ? (
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => openEdit(product)}
+                  className="flex-1 rounded-lg border border-orange-200 px-3 py-2 text-xs font-semibold text-slate-700"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(product)}
+                  className="flex-1 rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-4 hidden overflow-x-auto rounded-3xl border border-orange-100 md:block">
         <table className="min-w-[760px] bg-white text-sm sm:min-w-full">
           <thead className="bg-orange-50 text-left text-slate-700">
             <tr>
@@ -355,13 +531,18 @@ export function AdminProductsPage() {
             />
             <select
               className="rounded-xl border border-orange-200 px-3 py-2"
-              value={form.category}
+              value={form.categoryId}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, category: event.target.value }))
+                setForm((prev) => ({ ...prev, categoryId: event.target.value }))
               }
+              required
             >
-              <option value="Printers">Printers</option>
-              <option value="Accessories">Accessories</option>
+              <option value="">Select category</option>
+              {categoryChoices.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-4">
@@ -396,32 +577,40 @@ export function AdminProductsPage() {
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              className="rounded-xl border border-orange-200 px-3 py-2"
-              type="number"
-              min={1}
-              value={form.price}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  price: Number(event.target.value),
-                }))
-              }
-              required
-            />
-            <input
-              className="rounded-xl border border-orange-200 px-3 py-2"
-              type="number"
-              min={0}
-              value={form.stock}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  stock: Number(event.target.value),
-                }))
-              }
-              required
-            />
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Price
+              <input
+                className="rounded-xl border border-orange-200 px-3 py-2 text-sm normal-case tracking-normal"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g. 450"
+                value={form.priceInput}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    priceInput: normalizeDecimalInput(event.target.value),
+                  }))
+                }
+                required
+              />
+            </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Stock
+              <input
+                className="rounded-xl border border-orange-200 px-3 py-2 text-sm normal-case tracking-normal"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g. 12"
+                value={form.stockInput}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    stockInput: normalizeIntegerInput(event.target.value),
+                  }))
+                }
+                required
+              />
+            </label>
           </div>
           <button
             type="submit"

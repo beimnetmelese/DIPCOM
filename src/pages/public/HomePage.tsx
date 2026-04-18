@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { useAppContext } from "../../context/AppContext.tsx";
 
 const services = [
   {
@@ -71,6 +72,8 @@ const testimonials = [
 ];
 
 export function HomePage() {
+  const { siteSettings } = useAppContext();
+
   return (
     <AnimatedPage>
       <section className="relative -mx-3 -mt-20 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft sm:-mx-4 lg:-mx-6">
@@ -87,18 +90,13 @@ export function HomePage() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:grid-cols-[1.15fr,0.85fr] lg:px-6 lg:pb-24 lg:pt-36">
           <div className="max-w-3xl text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.28)]">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/85 backdrop-blur">
-              <PackageCheck className="h-4 w-4" /> Stock Management & Reseller
-              System
+              <PackageCheck className="h-4 w-4" /> {siteSettings.heroTagline}
             </p>
             <h1 className="mt-5 max-w-2xl font-heading text-4xl font-bold leading-tight text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)] sm:text-5xl lg:text-6xl">
-              Import printers, repair devices, and train teams with a premium
-              business platform.
+              {siteSettings.heroTitle}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
-              This public landing page introduces the full service story behind
-              the system: printer imports, repairs, training, and a modern
-              reseller experience that feels clean, professional, and
-              client-ready.
+              {siteSettings.heroDescription}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
