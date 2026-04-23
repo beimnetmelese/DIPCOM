@@ -766,17 +766,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let cancelled = false;
-
     const hydrate = async () => {
       await refreshPublicData();
     };
 
     void hydrate();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => {};
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  Clock3,
   LoaderCircle,
   Search,
   Truck,
@@ -57,10 +56,6 @@ export function AdminReservationsPage() {
   const deliveredCount = reservations.filter(
     (reservation) => reservation.status === "delivered",
   ).length;
-  const queueValue = activeReservations.reduce(
-    (sum, reservation) => sum + reservation.finalTotal,
-    0,
-  );
 
   const runAction = (
     reservationId: string,
