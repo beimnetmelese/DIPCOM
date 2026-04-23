@@ -28,8 +28,8 @@ import type {
 } from "../types.ts";
 import {
   apiRequest,
+  AUTH_EXPIRED_EVENT,
   clearStoredTokens,
-  getStoredRefreshToken,
   storeTokens,
 } from "../utils/api.ts";
 
@@ -770,38 +770,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const hydrate = async () => {
       await refreshPublicData();
-
-      const refreshToken = getStoredRefreshToken();
-      if (!refreshToken) {
-        return;
-      }
-
-      try {
-        const userResponse = await apiRequest<ApiUser>("/accounts/me/");
-        if (cancelled) {
-          return;
-        }
-
-        const user: AuthUser = {
-          id: userResponse.id,
-          name: userResponse.name,
-          email: userResponse.email,
-          role: userResponse.role,
-          sellerStatus: userResponse.sellerStatus,
-        };
-
-        setCurrentUser(user);
-        await refreshPrivateData(user.role);
-      } catch (error) {
-        console.error(error);
-        clearStoredTokens();
-      }
     };
 
     void hydrate();
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      clearStoredTokens();
+      setCurrentUser(null);
+      setSellers([]);
+      setAdminAccounts([]);
+      setReservations([]);
+      setSellerProducts([]);
+      setNotifications([]);
+      setUnreadNotificationCount(0);
+      pushToast("Session expired", "Please sign in again.", "warning");
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
     };
   }, []);
 
@@ -891,6 +884,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     clearStoredTokens();
     setCurrentUser(null);
+    setSellers([]);
+    setAdminAccounts([]);
+    setReservations([]);
+    setSellerProducts([]);
+    setNotifications([]);
+    setUnreadNotificationCount(0);
     pushToast("Signed out", "Session closed securely.", "info");
   };
 

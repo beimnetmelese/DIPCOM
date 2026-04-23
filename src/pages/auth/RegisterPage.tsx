@@ -15,6 +15,7 @@ import { useAppContext } from "../../context/AppContext.tsx";
 
 export function RegisterPage() {
   const { registerSeller } = useAppContext();
+  const phonePrefix = "+251";
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -26,7 +27,11 @@ export function RegisterPage() {
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = await registerSeller(form);
+    const fullPhoneNumber = `${phonePrefix}${form.phoneNumber}`;
+    const result = await registerSeller({
+      ...form,
+      phoneNumber: fullPhoneNumber,
+    });
     if (result.ok) {
       setSubmitted(true);
       setForm({
@@ -170,15 +175,23 @@ export function RegisterPage() {
               Phone Number
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
                 <Phone className="h-4 w-4 text-slate-400" />
+                <span className="border-r border-slate-300 pr-3 text-sm font-semibold text-slate-700">
+                  {phonePrefix}
+                </span>
                 <input
                   className="w-full bg-transparent outline-none placeholder:text-slate-400"
-                  placeholder="Phone Number"
+                  placeholder="942554784"
                   type="tel"
                   value={form.phoneNumber}
+                  inputMode="numeric"
+                  pattern="[0-9]{9}"
+                  maxLength={9}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
-                      phoneNumber: event.target.value,
+                      phoneNumber: event.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 9),
                     }))
                   }
                   required

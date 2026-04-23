@@ -34,6 +34,10 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
   const resolveNotificationTarget = (
     notification: (typeof notifications)[number],
   ) => {
+    if (notification.kind === "seller_registered") {
+      return "/admin/sellers";
+    }
+
     const metadata = notification.metadata ?? {};
     const explicitTarget = metadata.targetPath;
     if (typeof explicitTarget === "string" && explicitTarget) {

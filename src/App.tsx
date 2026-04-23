@@ -10,6 +10,7 @@ import { AdminReservationsPage } from "./pages/admin/AdminReservationsPage.tsx";
 import { AdminReservationHistoryPage } from "./pages/admin/AdminReservationHistoryPage.tsx";
 import { AdminSellersPage } from "./pages/admin/AdminSellersPage.tsx";
 import { AdminSettingsPage } from "./pages/admin/AdminSettingsPage.tsx";
+import { AdminNotificationsPage } from "./pages/admin/AdminNotificationsPage.tsx";
 import { LoginPage } from "./pages/auth/LoginPage.tsx";
 import { RegisterPage } from "./pages/auth/RegisterPage.tsx";
 import { SellerPendingPage } from "./pages/auth/SellerPendingPage.tsx";
@@ -106,6 +107,7 @@ function App() {
           <Route path="sellers" element={<AdminSellersPage />} />
           <Route path="reservations" element={<AdminReservationsPage />} />
           <Route path="history" element={<AdminReservationHistoryPage />} />
+          <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 

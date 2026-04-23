@@ -1,24 +1,32 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined ?? "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+export const AUTH_EXPIRED_EVENT = "dipcom:auth-expired";
 
 const ACCESS_TOKEN_KEY = "dipcom_access_token";
 const REFRESH_TOKEN_KEY = "dipcom_refresh_token";
+let accessTokenCache: string | null = null;
+let refreshTokenCache: string | null = null;
+
+if (typeof window !== "undefined") {
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
 
 export function getStoredAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return accessTokenCache;
 }
 
 export function getStoredRefreshToken() {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return refreshTokenCache;
 }
 
 export function storeTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  accessTokenCache = accessToken;
+  refreshTokenCache = refreshToken;
 }
 
 export function clearStoredTokens() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  accessTokenCache = null;
+  refreshTokenCache = null;
 }
 
 function resolveHeaders(headers?: HeadersInit) {
@@ -46,16 +54,18 @@ async function refreshAccessToken() {
 
   if (!response.ok) {
     clearStoredTokens();
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
     return null;
   }
 
   const data = await response.json() as { access?: string };
   if (!data.access) {
     clearStoredTokens();
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
     return null;
   }
 
-  localStorage.setItem(ACCESS_TOKEN_KEY, data.access);
+  accessTokenCache = data.access;
   return data.access;
 }
 
@@ -89,6 +99,7 @@ export async function apiRequest<T>(
   init: RequestInit = {},
   retryOnAuthFailure = true,
 ): Promise<T> {
+  const hadAuthTokens = Boolean(getStoredAccessToken() || getStoredRefreshToken());
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: resolveHeaders(init.headers),
@@ -98,6 +109,13 @@ export async function apiRequest<T>(
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       return apiRequest<T>(path, init, false);
+    }
+
+    if (hadAuthTokens) {
+      clearStoredTokens();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+      }
     }
   }
 
