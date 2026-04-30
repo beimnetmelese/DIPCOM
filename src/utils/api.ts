@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined ?? "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined ?? "https://stockapi.dipcomtech.com/api").replace(/\/+$/, "");
 export const AUTH_EXPIRED_EVENT = "dipcom:auth-expired";
 
 const ACCESS_TOKEN_KEY = "dipcom_access_token";
