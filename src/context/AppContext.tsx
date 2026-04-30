@@ -196,43 +196,25 @@ type ApiNotification = {
   readAt?: string;
 };
 
-type ApiSiteSettings = {
-  id: number;
-  commissionPercent: string | number;
-  contactPhone: string;
-  contactAddress: string;
-  businessHours: string;
-  tiktokUrl: string;
-  mapUrl: string;
-  heroTagline: string;
-  heroTitle: string;
-  heroDescription: string;
-  aboutTitle: string;
-  aboutDescription: string;
-  yearsExperience: number;
-  studentsTrained: number;
-  updatedAt?: string;
-};
-
 const defaultSiteSettings: SiteSettings = {
   id: 1,
   commissionPercent: 10,
   contactPhone: "+1 (555) 900-1001",
   contactAddress:
-    "Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11, Addis Ababa",
-  businessHours: "Monday - Saturday, 8:30 AM - 6:00 PM",
+    "Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11, Addis Ababa — a convenient landmark near central commercial areas, with easy street access and visitor parking.",
+  businessHours:
+    "Monday - Saturday, 8:30 AM - 6:00 PM (closed on Sundays). Our support desk is available during these hours for sales inquiries, technical assistance, and reseller coordination.",
   tiktokUrl: "https://www.tiktok.com/@dipcomtechnologies",
   mapUrl:
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set",
-  heroTagline: "Stock Management & Reseller System",
-  heroTitle:
-    "Import printers, repair devices, and train teams with a premium business platform.",
+  heroTagline: "Comprehensive Stock Management & Reseller Platform",
+  heroTitle: "Comprehensive Stock Management and Reseller Platform.",
   heroDescription:
-    "This public landing page introduces the full service story behind the system: printer imports, repairs, training, and a modern reseller experience.",
+    "Our platform brings together import operations, device repair services, and hands-on team training into a single coherent experience. It helps operations teams manage incoming shipments, track stock levels in real time, coordinate with reseller partners, and automate reservation workflows so customers receive accurate availability and timely delivery. Built with scalability and reliability in mind, the platform supports role-based access for admins, staff, and sellers, making it easy to run both retail and B2B reseller programs.",
   aboutTitle:
-    "18 years of trusted printer importing, repair, and training expertise.",
+    "Eighteen Years of Trusted Printer Import, Repair, and Training Expertise",
   aboutDescription:
-    "DIPCOM Technologies is a seasoned service provider with more than 18 years of experience in printer importing, printer repair, and practical training.",
+    "For nearly two decades, DIPCOM Technologies has specialized in importing high-quality printing hardware, providing expert repair services, and delivering practical training programs to technical teams and business users. Our engineers and trainers combine hands-on field experience with industry best practices to ensure reliable equipment performance, predictable maintenance schedules, and improved uptime. We focus on practical outcomes — reducing repair turnaround times, extending device lifecycles, and empowering reseller partners with sales and technical training that drives customer satisfaction and repeat business.",
   yearsExperience: 18,
   studentsTrained: 200,
   updatedAt: undefined,
@@ -353,31 +335,6 @@ function mapReservation(reservation: ApiReservation): Reservation {
   };
 }
 
-function mapSiteSettings(settings: ApiSiteSettings): SiteSettings {
-  return {
-    id: settings.id,
-    commissionPercent: toNumber(settings.commissionPercent),
-    contactPhone: settings.contactPhone || defaultSiteSettings.contactPhone,
-    contactAddress:
-      settings.contactAddress || defaultSiteSettings.contactAddress,
-    businessHours: settings.businessHours || defaultSiteSettings.businessHours,
-    tiktokUrl: settings.tiktokUrl || defaultSiteSettings.tiktokUrl,
-    mapUrl: settings.mapUrl || defaultSiteSettings.mapUrl,
-    heroTagline: settings.heroTagline || defaultSiteSettings.heroTagline,
-    heroTitle: settings.heroTitle || defaultSiteSettings.heroTitle,
-    heroDescription:
-      settings.heroDescription || defaultSiteSettings.heroDescription,
-    aboutTitle: settings.aboutTitle || defaultSiteSettings.aboutTitle,
-    aboutDescription:
-      settings.aboutDescription || defaultSiteSettings.aboutDescription,
-    yearsExperience:
-      settings.yearsExperience ?? defaultSiteSettings.yearsExperience,
-    studentsTrained:
-      settings.studentsTrained ?? defaultSiteSettings.studentsTrained,
-    updatedAt: settings.updatedAt,
-  };
-}
-
 function supportsBrowserNotifications() {
   return typeof window !== "undefined" && "Notification" in window;
 }
@@ -458,7 +415,63 @@ function base64UrlToUint8Array(base64UrlString: string) {
   return outputArray;
 }
 
-function buildCatalogFormData(payload: ProductUpsertPayload) {
+async function compressImageFile(file: File) {
+  if (typeof window === "undefined" || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const maxDimension = 1600;
+  const quality = 0.8;
+
+  try {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("Unable to load image file."));
+      image.src = imageUrl;
+    });
+
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(image.width, image.height),
+    );
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      URL.revokeObjectURL(imageUrl);
+      return file;
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+    URL.revokeObjectURL(imageUrl);
+
+    const compressedBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", quality);
+    });
+
+    if (!compressedBlob) {
+      return file;
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "product-image";
+    return new File([compressedBlob], `${baseName}.jpg`, {
+      type: "image/jpeg",
+      lastModified: file.lastModified,
+    });
+  } catch {
+    return file;
+  }
+}
+
+async function buildCatalogFormData(payload: ProductUpsertPayload) {
   const data = new FormData();
   data.append("name", payload.name);
   data.append("price", String(payload.price));
@@ -466,7 +479,7 @@ function buildCatalogFormData(payload: ProductUpsertPayload) {
   data.append("brand", payload.brand);
   data.append("categoryId", payload.categoryId);
   if (payload.imageFile) {
-    data.append("imageFile", payload.imageFile);
+    data.append("imageFile", await compressImageFile(payload.imageFile));
   }
   return data;
 }
@@ -515,18 +528,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshPublicData = async () => {
     try {
-      const [categoriesResponse, productsResponse, siteResponse] =
-        await Promise.all([
-          apiRequest<ApiCategory[]>("/catalog/categories/"),
-          apiRequest<ApiProduct[]>("/catalog/products/"),
-          apiRequest<ApiSiteSettings>("/site/settings/"),
-        ]);
+      const [categoriesResponse, productsResponse] = await Promise.all([
+        apiRequest<ApiCategory[]>("/catalog/categories/"),
+        apiRequest<ApiProduct[]>("/catalog/products/"),
+      ]);
 
       setCategories(categoriesResponse.map(mapCategory));
       setProducts(productsResponse.map(mapProduct));
-      const mappedSettings = mapSiteSettings(siteResponse);
-      setSiteSettings(mappedSettings);
-      setCommissionPercentState(mappedSettings.commissionPercent);
+
+      // Intentionally do NOT fetch site settings from the backend.
+      // We rely on the hard-coded `defaultSiteSettings` above so the UI
+      // displays consistent, local content and does not depend on the
+      // Django backend's settings API.
+      setSiteSettings(defaultSiteSettings);
+      setCommissionPercentState(defaultSiteSettings.commissionPercent);
     } catch (error) {
       console.error(error);
     }
@@ -1020,7 +1035,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await apiRequest("/catalog/products/", {
         method: "POST",
-        body: buildCatalogFormData(payload),
+        body: await buildCatalogFormData(payload),
       });
       await refreshForCurrentUser();
       pushToast(
@@ -1042,7 +1057,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await apiRequest(`/catalog/products/${productId}/`, {
         method: "PATCH",
-        body: buildCatalogFormData(payload),
+        body: await buildCatalogFormData(payload),
       });
       await refreshForCurrentUser();
       pushToast(
@@ -1077,7 +1092,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await apiRequest("/catalog/seller-products/", {
         method: "POST",
-        body: buildCatalogFormData(payload),
+        body: await buildCatalogFormData(payload),
       });
       await refreshForCurrentUser();
       pushToast(
@@ -1101,7 +1116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await apiRequest(`/catalog/seller-products/${productId}/`, {
         method: "PATCH",
-        body: buildCatalogFormData(payload),
+        body: await buildCatalogFormData(payload),
       });
       await refreshForCurrentUser();
       pushToast(

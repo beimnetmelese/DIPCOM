@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import { initialProducts } from "../../data/mockData.ts";
 import { Product, ProductFilters } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
@@ -12,7 +13,7 @@ const initialFilters: ProductFilters = {
   category: "all",
   brand: "all",
   minPrice: 0,
-  maxPrice: 1000,
+  maxPrice: 99999999,
   availability: "all",
   sortBy: "newest",
 };
@@ -27,7 +28,7 @@ export function SellerProductsPage() {
   const [reserveTarget, setReserveTarget] = useState<Product | null>(null);
   const [reserveQuantityInput, setReserveQuantityInput] = useState("1");
   const [minPriceInput, setMinPriceInput] = useState("0");
-  const [maxPriceInput, setMaxPriceInput] = useState("1000");
+  const [maxPriceInput, setMaxPriceInput] = useState("99999999");
   const [reserveError, setReserveError] = useState("");
   const [isReserving, setIsReserving] = useState(false);
   const [deliveryNotice, setDeliveryNotice] = useState<{
@@ -37,9 +38,23 @@ export function SellerProductsPage() {
 
   const deliveryPhoneNumber = "+1 (555) 900-1001";
 
+  const catalogProducts = useMemo(() => {
+    const merged = new Map<string, Product>();
+
+    initialProducts.forEach((product) => {
+      merged.set(product.id, product);
+    });
+
+    products.forEach((product) => {
+      merged.set(product.id, product);
+    });
+
+    return [...merged.values()];
+  }, [products]);
+
   const brands = useMemo(
-    () => [...new Set(products.map((product) => product.brand))],
-    [products],
+    () => [...new Set(catalogProducts.map((product) => product.brand))],
+    [catalogProducts],
   );
 
   const categoryChoices = useMemo(
@@ -48,7 +63,7 @@ export function SellerProductsPage() {
   );
 
   const filtered = useMemo(() => {
-    const result = products.filter((product) => {
+    const result = catalogProducts.filter((product) => {
       const searchText =
         `${product.name} ${product.brand} ${product.category}`.toLowerCase();
       const matchQuery = searchText.includes(filters.query.toLowerCase());
@@ -88,10 +103,12 @@ export function SellerProductsPage() {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-  }, [filters, products]);
+  }, [catalogProducts, filters]);
 
-  const inStockCount = products.filter((product) => product.stock > 0).length;
-  const lowStockCount = products.filter(
+  const inStockCount = catalogProducts.filter(
+    (product) => product.stock > 0,
+  ).length;
+  const lowStockCount = catalogProducts.filter(
     (product) => product.stock > 0 && product.stock <= 3,
   ).length;
 
