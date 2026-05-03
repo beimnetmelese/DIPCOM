@@ -32,6 +32,7 @@ import {
   clearStoredTokens,
   storeTokens,
 } from "../utils/api.ts";
+import { contactPhone } from "../utils/branding.ts";
 
 interface RegisterPayload {
   name: string;
@@ -199,7 +200,7 @@ type ApiNotification = {
 const defaultSiteSettings: SiteSettings = {
   id: 1,
   commissionPercent: 10,
-  contactPhone: "+1 (555) 900-1001",
+  contactPhone: "+251 91 122 4323",
   contactAddress:
     "Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11, Addis Ababa — a convenient landmark near central commercial areas, with easy street access and visitor parking.",
   businessHours:
@@ -293,7 +294,7 @@ function mapSeller(seller: ApiSeller): Seller {
     name: seller.name,
     email: seller.email,
     businessName: seller.businessName,
-    phoneNumber: seller.phoneNumber || "+251900000000",
+    phoneNumber: seller.phoneNumber || contactPhone,
     status: seller.sellerStatus ?? seller.status ?? "pending",
     joinedAt:
       seller.joinedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),

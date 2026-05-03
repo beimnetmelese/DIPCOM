@@ -5,6 +5,7 @@ import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import type { Product } from "../../types.ts";
+import { contactPhone } from "../../utils/branding.ts";
 import { currency } from "../../utils/format.ts";
 
 export function ShopPage() {
@@ -221,7 +222,7 @@ export function ShopPage() {
                       Phone Number
                     </p>
                     <p className="font-semibold text-slate-900">
-                      +1 (555) 900-1001
+                      {contactPhone}
                     </p>
                   </div>
                 </div>

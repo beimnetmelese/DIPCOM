@@ -5,6 +5,7 @@ import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { initialProducts } from "../../data/mockData.ts";
+import { contactPhone } from "../../utils/branding.ts";
 import { Product, ProductFilters } from "../../types.ts";
 import { currency } from "../../utils/format.ts";
 
@@ -36,7 +37,7 @@ export function SellerProductsPage() {
     quantity: number;
   } | null>(null);
 
-  const deliveryPhoneNumber = "+1 (555) 900-1001";
+  const deliveryPhoneNumber = contactPhone;
 
   const catalogProducts = useMemo(() => {
     const merged = new Map<string, Product>();

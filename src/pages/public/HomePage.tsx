@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CheckCircle2,
   GraduationCap,
-  PackageCheck,
   ShieldCheck,
   Star,
   Truck,
@@ -12,6 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import { companyLogo, companyName } from "../../utils/branding.ts";
 
 const services = [
   {
@@ -90,7 +90,14 @@ export function HomePage() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:grid-cols-[1.15fr,0.85fr] lg:px-6 lg:pb-24 lg:pt-36">
           <div className="max-w-3xl text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.28)]">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/85 backdrop-blur">
-              <PackageCheck className="h-4 w-4" /> {siteSettings.heroTagline}
+              <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full bg-white/90 p-0.5">
+                <img
+                  src={companyLogo}
+                  alt={`${companyName} logo`}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+              {siteSettings.heroTagline}
             </p>
             <h1 className="mt-5 max-w-2xl font-heading text-4xl font-bold leading-tight text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)] sm:text-5xl lg:text-6xl">
               {siteSettings.heroTitle}

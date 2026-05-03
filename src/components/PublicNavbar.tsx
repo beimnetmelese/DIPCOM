@@ -1,7 +1,8 @@
-import { Menu, PackageCheck, UserCircle2, X } from "lucide-react";
+import { Menu, UserCircle2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext.tsx";
+import { companyLogo, companyName } from "../utils/branding.ts";
 
 const links = [
   { label: "Home", to: "/" },
@@ -32,11 +33,15 @@ export function PublicNavbar() {
     <header className="fixed left-0 top-0 z-40 w-full border-b border-orange-100 bg-white/90 backdrop-blur">
       <div className="flex w-full items-center justify-between gap-2 px-3 py-4 sm:px-4 lg:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-2">
-          <span className="rounded-xl bg-orange-500 p-2 text-white">
-            <PackageCheck className="h-5 w-5" />
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-orange-100">
+            <img
+              src={companyLogo}
+              alt={`${companyName} logo`}
+              className="h-full w-full object-contain"
+            />
           </span>
           <span className="max-w-[170px] truncate font-heading text-sm font-bold text-slate-900 sm:max-w-none sm:text-lg">
-            DIPCOM Technologies
+            {companyName}
           </span>
         </Link>
 

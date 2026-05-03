@@ -180,7 +180,7 @@ export function RegisterPage() {
                 </span>
                 <input
                   className="w-full bg-transparent outline-none placeholder:text-slate-400"
-                  placeholder="942554784"
+                  placeholder="911224323"
                   type="tel"
                   value={form.phoneNumber}
                   inputMode="numeric"

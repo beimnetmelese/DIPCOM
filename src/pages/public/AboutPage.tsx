@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   GraduationCap,
   MapPinned,
-  PackageCheck,
   Sparkles,
   Truck,
   Users,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import { companyLogo, companyName } from "../../utils/branding.ts";
 
 const stats = [
   { value: "18+", label: "Years of experience" },
@@ -39,12 +39,20 @@ const pillars = [
 ];
 
 const galleryPhotos = [
-  "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1556740714-a8395b3bf30f?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1582582429416-f365cae7a7cd?auto=format&fit=crop&w=900&q=80",
+  "/src/assets/IMG_1895.PNG",
+  "/src/assets/IMG_1896.PNG",
+  "/src/assets/IMG_1897.PNG",
+  "/src/assets/IMG_1898.PNG",
+  "/src/assets/IMG_1899.PNG",
+  "/src/assets/IMG_1900.PNG",
+  "/src/assets/IMG_1901.PNG",
+  "/src/assets/IMG_1902.PNG",
+  "/src/assets/IMG_1903.PNG",
+  "/src/assets/IMG_1904.PNG",
+  "/src/assets/IMG_1905.PNG",
+  "/src/assets/IMG_1906.PNG",
+  "/src/assets/IMG_1907.PNG",
+  "/src/assets/IMG_1908.PNG",
 ];
 
 export function AboutPage() {
@@ -66,7 +74,14 @@ export function AboutPage() {
         <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:grid-cols-[1.08fr,0.92fr] lg:px-6 lg:pb-24 lg:pt-36">
           <div className="max-w-2xl text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.28)]">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/85 backdrop-blur">
-              <PackageCheck className="h-4 w-4" /> About DIPCOM Technologies
+              <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full bg-white/90 p-0.5">
+                <img
+                  src={companyLogo}
+                  alt={`${companyName} logo`}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+              About {companyName}
             </p>
             <h1 className="mt-4 max-w-2xl font-heading text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
               {siteSettings.aboutTitle}
@@ -192,21 +207,8 @@ export function AboutPage() {
               </p>
             </div>
 
-            <div className="mt-5 grid auto-rows-[180px] grid-cols-2 gap-3 md:grid-cols-6">
+            <div className="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {galleryPhotos.map((image, index) => {
-                const layoutClass =
-                  index === 0
-                    ? "md:col-span-3 md:row-span-2"
-                    : index === 1
-                      ? "md:col-span-3"
-                      : index === 2
-                        ? "md:col-span-2"
-                        : index === 3
-                          ? "md:col-span-2 md:row-span-2"
-                          : index === 4
-                            ? "md:col-span-2"
-                            : "md:col-span-4";
-
                 return (
                   <motion.div
                     key={image}
@@ -214,7 +216,7 @@ export function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.05 }}
-                    className={`group relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.15)] ${layoutClass}`}
+                    className="group relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.15)] aspect-[4/3]"
                   >
                     <img
                       src={image}

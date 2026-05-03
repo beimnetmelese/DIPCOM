@@ -1,4 +1,5 @@
 import { Product, Reservation, Seller, SellerProduct } from '../types.ts'
+import { contactPhone } from "../utils/branding.ts";
 
 export const initialProducts: Product[] = [
   { id: 'p1', name: 'HP LaserJet Pro M404dn', price: 450, stock: 18, brand: 'HP', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-10' },
@@ -23,7 +24,7 @@ export const initialSellers: Seller[] = [
     name: 'Core Retail Hub',
     email: 'seller@test.com',
     businessName: 'Core Retail Hub',
-    phoneNumber: '+251911111111',
+    phoneNumber: contactPhone,
     password: '123456',
     status: 'approved',
     joinedAt: '2026-01-02',
@@ -33,7 +34,7 @@ export const initialSellers: Seller[] = [
     name: 'Al Noor Supplies',
     email: 'alnoor@example.com',
     businessName: 'Al Noor Supplies',
-    phoneNumber: '+251922222222',
+    phoneNumber: contactPhone,
     password: 'pass123',
     status: 'approved',
     joinedAt: '2026-01-16',
@@ -43,7 +44,7 @@ export const initialSellers: Seller[] = [
     name: 'Tech Station',
     email: 'techstation@example.com',
     businessName: 'Tech Station',
-    phoneNumber: '+251933333333',
+    phoneNumber: contactPhone,
     password: 'pass123',
     status: 'pending',
     joinedAt: '2026-03-02',

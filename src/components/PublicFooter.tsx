@@ -1,11 +1,6 @@
-import {
-  ArrowUpRight,
-  Mail,
-  MapPinned,
-  PhoneCall,
-  Sparkles,
-} from "lucide-react";
+import { ArrowUpRight, Mail, MapPinned, PhoneCall } from "lucide-react";
 import { Link } from "react-router-dom";
+import { companyLogo, companyName, contactPhone } from "../utils/branding.ts";
 
 export function PublicFooter() {
   return (
@@ -13,7 +8,14 @@ export function PublicFooter() {
       <div className="mx-auto grid w-full gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr,0.8fr,0.8fr] lg:px-8 lg:py-14">
         <div className="max-w-xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
-            <Sparkles className="h-4 w-4 text-orange-300" /> DIPCOM Technologies
+            <span className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-white/90 p-0.5">
+              <img
+                src={companyLogo}
+                alt={`${companyName} logo`}
+                className="h-full w-full object-contain"
+              />
+            </span>
+            {companyName}
           </div>
           <p className="mt-4 max-w-lg text-sm leading-7 text-white/75">
             A polished platform for printer imports, repair services, training,
@@ -49,7 +51,7 @@ export function PublicFooter() {
           <div className="mt-4 grid gap-4 text-sm text-white/75">
             <div className="flex items-start gap-3">
               <PhoneCall className="mt-0.5 h-4 w-4 text-orange-300" />
-              <span>+1 (555) 900-1001</span>
+              <span>{contactPhone}</span>
             </div>
             <div className="flex items-start gap-3">
               <Mail className="mt-0.5 h-4 w-4 text-orange-300" />
