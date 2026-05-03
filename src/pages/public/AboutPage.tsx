@@ -38,22 +38,14 @@ const pillars = [
   },
 ];
 
-const galleryPhotos = [
-  "/src/assets/IMG_1895.PNG",
-  "/src/assets/IMG_1896.PNG",
-  "/src/assets/IMG_1897.PNG",
-  "/src/assets/IMG_1898.PNG",
-  "/src/assets/IMG_1899.PNG",
-  "/src/assets/IMG_1900.PNG",
-  "/src/assets/IMG_1901.PNG",
-  "/src/assets/IMG_1902.PNG",
-  "/src/assets/IMG_1903.PNG",
-  "/src/assets/IMG_1904.PNG",
-  "/src/assets/IMG_1905.PNG",
-  "/src/assets/IMG_1906.PNG",
-  "/src/assets/IMG_1907.PNG",
-  "/src/assets/IMG_1908.PNG",
-];
+const galleryPhotoModules = import.meta.glob("../../assets/IMG_*.PNG", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+const galleryPhotos = Object.keys(galleryPhotoModules)
+  .sort()
+  .map((path) => galleryPhotoModules[path]);
 
 export function AboutPage() {
   const { siteSettings } = useAppContext();
