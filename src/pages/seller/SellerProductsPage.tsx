@@ -326,7 +326,7 @@ export function SellerProductsPage() {
 
       <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filtered.map((product) => {
-          const finalPrice = product.price * (1 - commissionPercent / 100);
+          const finalPrice = product.price * (1 - sellerDiscountPercent / 100);
           const stockClass =
             product.stock <= 3 ? "text-rose-600" : "text-slate-600";
 
