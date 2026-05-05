@@ -46,6 +46,7 @@ export interface Seller {
   phoneNumber: string
   password?: string
   status: SellerStatus
+  sellerDiscountPercent: number
   joinedAt: string
 }
 
@@ -97,6 +98,7 @@ export interface AuthUser {
   name: string
   email: string
   sellerStatus?: SellerStatus
+  sellerDiscountPercent?: number
 }
 
 export interface ProductFilters {

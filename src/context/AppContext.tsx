@@ -85,6 +85,7 @@ interface AppContextValue {
   deleteAdminAccount: (adminId: string) => Promise<void>;
   approveSeller: (sellerId: string) => Promise<void>;
   rejectSeller: (sellerId: string) => Promise<void>;
+  updateSellerDiscount: (sellerId: string, value: number) => Promise<void>;
   addCategory: (payload: CategoryPayload) => Promise<void>;
   addProduct: (payload: ProductUpsertPayload) => Promise<void>;
   updateProduct: (
@@ -117,6 +118,7 @@ type ApiUser = {
   email: string;
   role: "admin" | "seller" | "staff";
   sellerStatus?: "approved" | "pending" | "rejected";
+  sellerDiscountPercent?: string | number;
 };
 
 type ApiCategory = {
@@ -134,6 +136,7 @@ type ApiSeller = {
   phoneNumber?: string;
   sellerStatus?: "approved" | "pending" | "rejected";
   status?: "approved" | "pending" | "rejected";
+  sellerDiscountPercent?: string | number;
   joinedAt?: string;
 };
 
@@ -296,6 +299,7 @@ function mapSeller(seller: ApiSeller): Seller {
     businessName: seller.businessName,
     phoneNumber: seller.phoneNumber || contactPhone,
     status: seller.sellerStatus ?? seller.status ?? "pending",
+    sellerDiscountPercent: toNumber(seller.sellerDiscountPercent ?? 0),
     joinedAt:
       seller.joinedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
   };
@@ -875,6 +879,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         email: response.user.email,
         role: response.user.role,
         sellerStatus: response.user.sellerStatus,
+        sellerDiscountPercent:
+          response.user.sellerDiscountPercent != null
+            ? toNumber(response.user.sellerDiscountPercent)
+            : undefined,
       };
 
       setCurrentUser(user);
@@ -1008,6 +1016,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to reject seller.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const updateSellerDiscount = async (sellerId: string, value: number) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sellerDiscountPercent: value }),
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Seller discount updated",
+        `Discount is now ${value}% for this seller.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to update seller discount.";
       pushToast("Action failed", message, "warning");
     }
   };
@@ -1293,6 +1323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteAdminAccount,
       approveSeller,
       rejectSeller,
+      updateSellerDiscount,
       addCategory,
       addProduct,
       updateProduct,

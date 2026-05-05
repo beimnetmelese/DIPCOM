@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   CheckCircle2,
@@ -13,12 +13,31 @@ import { StatCard } from "../../components/StatCard.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 
 export function AdminSellersPage() {
-  const { sellers, approveSeller, rejectSeller } = useAppContext();
+  const { sellers, approveSeller, rejectSeller, updateSellerDiscount } =
+    useAppContext();
   const [query, setQuery] = useState("");
+  const [discountInputs, setDiscountInputs] = useState<Record<string, string>>(
+    {},
+  );
+  const [savingSellerId, setSavingSellerId] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{
     sellerId: string;
     action: "approve" | "reject" | "remove";
   } | null>(null);
+
+  const normalizeIntegerInput = (value: string) =>
+    value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+
+  useEffect(() => {
+    setDiscountInputs(
+      Object.fromEntries(
+        sellers.map((seller) => [
+          seller.id,
+          String(seller.sellerDiscountPercent ?? 0),
+        ]),
+      ),
+    );
+  }, [sellers]);
 
   const filteredSellers = useMemo(() => {
     return [...sellers]
@@ -62,6 +81,19 @@ export function AdminSellersPage() {
     }
 
     rejectSeller(sellerId);
+  };
+
+  const saveSellerDiscount = async (sellerId: string) => {
+    const rawValue = discountInputs[sellerId] ?? "0";
+    const parsed = Number(rawValue || 0);
+    const clamped = Math.min(50, Math.max(0, parsed));
+
+    setSavingSellerId(sellerId);
+    try {
+      await updateSellerDiscount(sellerId, clamped);
+    } finally {
+      setSavingSellerId(null);
+    }
   };
 
   return (
@@ -206,6 +238,37 @@ export function AdminSellersPage() {
                     Remove
                   </button>
                 )}
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr),auto] sm:items-end">
+                <label className="text-sm font-semibold text-slate-700">
+                  Seller discount (%)
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={
+                      discountInputs[seller.id] ??
+                      String(seller.sellerDiscountPercent ?? 0)
+                    }
+                    onChange={(event) => {
+                      const next = normalizeIntegerInput(event.target.value);
+                      const capped = Number(next || 0) > 50 ? "50" : next;
+                      setDiscountInputs((prev) => ({
+                        ...prev,
+                        [seller.id]: capped,
+                      }));
+                    }}
+                    className="mt-1 w-full rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void saveSellerDiscount(seller.id)}
+                  disabled={savingSellerId === seller.id}
+                  className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingSellerId === seller.id ? "Saving..." : "Save discount"}
+                </button>
               </div>
 
               {confirmation?.sellerId === seller.id ? (

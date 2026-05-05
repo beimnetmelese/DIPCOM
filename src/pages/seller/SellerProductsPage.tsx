@@ -23,8 +23,15 @@ const normalizeIntegerInput = (value: string) =>
   value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
 
 export function SellerProductsPage() {
-  const { categories, products, reserveProduct, commissionPercent } =
-    useAppContext();
+  const {
+    categories,
+    products,
+    reserveProduct,
+    commissionPercent,
+    currentUser,
+  } = useAppContext();
+  const sellerDiscountPercent =
+    currentUser?.sellerDiscountPercent ?? commissionPercent;
   const [filters, setFilters] = useState<ProductFilters>(initialFilters);
   const [reserveTarget, setReserveTarget] = useState<Product | null>(null);
   const [reserveQuantityInput, setReserveQuantityInput] = useState("1");
@@ -202,10 +209,10 @@ export function SellerProductsPage() {
         </div>
         <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Discount rate
+            Your discount rate
           </p>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
-            {commissionPercent}%
+            {sellerDiscountPercent}%
           </p>
         </div>
       </div>

@@ -56,7 +56,7 @@ export function AdminSettingsPage() {
               <BadgeCheck className="h-4 w-4" /> Platform settings
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Control discounts and register new admin accounts.
+              Control the default discount and register new admin accounts.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
               Keep the platform organized by adjusting discount settings and
@@ -91,12 +91,14 @@ export function AdminSettingsPage() {
         </article>
         <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Discount
+            Default discount
           </p>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
             {commissionPercent}%
           </p>
-          <p className="mt-1 text-sm text-slate-500">Current discount rate</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Default rate for new sellers
+          </p>
         </article>
       </div>
 
@@ -106,7 +108,7 @@ export function AdminSettingsPage() {
             Platform Settings
           </h2>
           <p className="mt-2 text-sm text-slate-500">
-            Control reseller discount logic globally.
+            Control the default reseller discount used for new accounts.
           </p>
 
           <form className="mt-6 grid gap-4" onSubmit={onSubmit}>

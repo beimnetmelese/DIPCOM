@@ -27,6 +27,7 @@ export const initialSellers: Seller[] = [
     phoneNumber: contactPhone,
     password: '123456',
     status: 'approved',
+    sellerDiscountPercent: 10,
     joinedAt: '2026-01-02',
   },
   {
@@ -37,6 +38,7 @@ export const initialSellers: Seller[] = [
     phoneNumber: contactPhone,
     password: 'pass123',
     status: 'approved',
+    sellerDiscountPercent: 12,
     joinedAt: '2026-01-16',
   },
   {
@@ -47,6 +49,7 @@ export const initialSellers: Seller[] = [
     phoneNumber: contactPhone,
     password: 'pass123',
     status: 'pending',
+    sellerDiscountPercent: 8,
     joinedAt: '2026-03-02',
   },
 ]
