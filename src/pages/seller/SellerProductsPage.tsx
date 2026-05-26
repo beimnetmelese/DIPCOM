@@ -22,6 +22,9 @@ const initialFilters: ProductFilters = {
 const normalizeIntegerInput = (value: string) =>
   value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
 
+const conditionLabel = (value?: string) =>
+  value === "used" ? "Used" : "Brand New";
+
 export function SellerProductsPage() {
   const {
     categories,
@@ -359,6 +362,11 @@ export function SellerProductsPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-slate-500">{product.category}</p>
+              <p
+                className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
+              >
+                {conditionLabel(product.condition)}
+              </p>
               <p className={`mt-1 text-sm font-semibold ${stockClass}`}>
                 Stock: {product.stock}
               </p>

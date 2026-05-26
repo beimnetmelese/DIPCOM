@@ -62,6 +62,9 @@ export function ShopPage() {
     );
   }, [availability, brand, category, products, query, sortBy]);
 
+  const conditionLabel = (value?: string) =>
+    value === "used" ? "Used" : "Brand New";
+
   return (
     <AnimatedPage>
       <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
@@ -175,6 +178,11 @@ export function ShopPage() {
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
                   {product.category} · {product.stock} available
+                </p>
+                <p
+                  className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
+                >
+                  {conditionLabel(product.condition)}
                 </p>
                 <div className="mt-4 flex items-center justify-between gap-3">
                   <p className="text-xl font-bold text-orange-700">

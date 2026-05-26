@@ -189,6 +189,7 @@ type ApiProduct = {
   category: string;
   categoryId: string;
   imageUrl?: string;
+  condition?: "new" | "used";
   createdAt: string;
 };
 
@@ -202,6 +203,7 @@ type ApiSellerProduct = {
   category: string;
   categoryId: string;
   imageUrl?: string;
+  condition?: "new" | "used";
   createdAt: string;
 };
 
@@ -305,6 +307,7 @@ function mapProduct(product: ApiProduct): Product {
     category: product.category,
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
+    condition: product.condition ?? "new",
     createdAt: product.createdAt,
   };
 }
@@ -320,6 +323,7 @@ function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
     category: product.category,
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
+    condition: product.condition ?? "new",
     createdAt: product.createdAt,
   };
 }
@@ -530,8 +534,8 @@ async function buildCatalogFormData(payload: ProductUpsertPayload) {
   if (payload.imageFile) {
     data.append("imageFile", await compressImageFile(payload.imageFile));
   }
-  if ((payload as any).condition) {
-    data.append("condition", (payload as any).condition);
+  if (payload.condition) {
+    data.append("condition", payload.condition);
   }
   return data;
 }

@@ -50,6 +50,9 @@ const escapeXml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
+const conditionLabel = (value?: string) =>
+  value === "used" ? "Used" : "Brand New";
+
 export function AdminProductsPage() {
   const {
     currentUser,
@@ -188,7 +191,7 @@ export function AdminProductsPage() {
     const rows = filteredProducts
       .map(
         (product) =>
-          `<Row><Cell><Data ss:Type="String">${escapeXml(product.name)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.brand)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.category)}</Data></Cell><Cell><Data ss:Type="Number">${product.price}</Data></Cell><Cell><Data ss:Type="Number">${product.stock}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.createdAt)}</Data></Cell></Row>`,
+          `<Row><Cell><Data ss:Type="String">${escapeXml(product.name)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.brand)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.category)}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(conditionLabel(product.condition))}</Data></Cell><Cell><Data ss:Type="Number">${product.price}</Data></Cell><Cell><Data ss:Type="Number">${product.stock}</Data></Cell><Cell><Data ss:Type="String">${escapeXml(product.createdAt)}</Data></Cell></Row>`,
       )
       .join("");
 
@@ -204,6 +207,7 @@ export function AdminProductsPage() {
         <Cell><Data ss:Type="String">Name</Data></Cell>
         <Cell><Data ss:Type="String">Brand</Data></Cell>
         <Cell><Data ss:Type="String">Category</Data></Cell>
+        <Cell><Data ss:Type="String">Condition</Data></Cell>
         <Cell><Data ss:Type="String">Price</Data></Cell>
         <Cell><Data ss:Type="String">Stock</Data></Cell>
         <Cell><Data ss:Type="String">Created At</Data></Cell>
@@ -394,6 +398,11 @@ export function AdminProductsPage() {
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                   {product.category}
                 </p>
+                <p
+                  className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
+                >
+                  {conditionLabel(product.condition)}
+                </p>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -438,6 +447,7 @@ export function AdminProductsPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Brand</th>
               <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Condition</th>
               <th className="px-4 py-3">Price</th>
               <th className="px-4 py-3">Stock</th>
               {!isReadOnly ? <th className="px-4 py-3">Actions</th> : null}
@@ -475,6 +485,13 @@ export function AdminProductsPage() {
                 </td>
                 <td className="px-4 py-3">{product.brand}</td>
                 <td className="px-4 py-3">{product.category}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
+                  >
+                    {conditionLabel(product.condition)}
+                  </span>
+                </td>
                 <td className="px-4 py-3">{currency(product.price)}</td>
                 <td
                   className={`px-4 py-3 font-semibold ${product.stock <= 3 ? "text-rose-600" : "text-slate-700"}`}

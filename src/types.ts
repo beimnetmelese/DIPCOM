@@ -17,6 +17,7 @@ export interface Product {
   category: string
   categoryId: string
   imageUrl?: string
+  condition?: 'new' | 'used'
   createdAt: string
 }
 
