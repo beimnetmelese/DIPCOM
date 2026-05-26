@@ -39,7 +39,7 @@ function ProtectedRoute({
 
   if (
     currentUser.role === "seller" &&
-    currentUser.sellerStatus === "pending" &&
+    currentUser.sellerStatus !== "approved" &&
     !location.pathname.startsWith("/seller/pending")
   ) {
     return <Navigate to="/seller/pending" replace />;
@@ -51,6 +51,15 @@ function ProtectedRoute({
     location.pathname.startsWith("/seller/pending")
   ) {
     return <Navigate to="/seller" replace />;
+  }
+
+  if (
+    currentUser.role === "seller" &&
+    currentUser.sellerStatus !== "approved" &&
+    location.pathname.startsWith("/seller") &&
+    !location.pathname.startsWith("/seller/pending")
+  ) {
+    return <Navigate to="/seller/pending" replace />;
   }
 
   if (!allowedRoles.includes(currentUser.role)) {

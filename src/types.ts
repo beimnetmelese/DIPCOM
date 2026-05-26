@@ -1,4 +1,4 @@
-export type SellerStatus = 'approved' | 'pending' | 'rejected'
+export type SellerStatus = 'approved' | 'pending' | 'rejected' | 'removed'
 export type UserRole = 'admin' | 'seller' | 'staff'
 
 export interface Category {
@@ -32,6 +32,7 @@ export interface ProductUpsertPayload {
   category: string
   categoryId: string
   imageFile?: File | null
+  condition?: 'new' | 'used'
 }
 
 export interface SellerProductUpsertPayload extends ProductUpsertPayload {
@@ -44,8 +45,15 @@ export interface Seller {
   email: string
   businessName: string
   phoneNumber: string
+  location: string
+  tinNumber: string
   password?: string
   status: SellerStatus
+  removed?: boolean
+  removalReason?: string
+  removedAt?: string
+  rejectionReason?: string
+  rejectedAt?: string
   sellerDiscountPercent: number
   joinedAt: string
 }
@@ -72,6 +80,7 @@ export interface Reservation {
   createdAt: string
   deliveredAt?: string
   rejectedAt?: string
+  rejectionReason?: string
 }
 
 export interface SiteSettings {
@@ -97,8 +106,16 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  businessName?: string
+  phoneNumber?: string
+  location?: string
+  tinNumber?: string
   sellerStatus?: SellerStatus
   sellerDiscountPercent?: number
+  removalReason?: string
+  rejectionReason?: string
+  removedAt?: string
+  rejectedAt?: string
 }
 
 export interface ProductFilters {

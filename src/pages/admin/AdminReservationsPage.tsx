@@ -22,18 +22,21 @@ export function AdminReservationsPage() {
     confirmReservationDelivery,
   } = useAppContext();
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [confirmation, setConfirmation] = useState<{
     reservationId: string;
     action: "approve" | "reject" | "deliver";
   } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const activeReservations = useMemo(
     () =>
       reservations
-        .filter(
-          (reservation) =>
-            reservation.status === "pending" ||
-            reservation.status === "approved",
+        .filter((reservation) =>
+          statusFilter === "all"
+            ? reservation.status === "pending" ||
+              reservation.status === "approved"
+            : reservation.status === statusFilter,
         )
         .filter((reservation) => {
           const searchable =
@@ -44,7 +47,7 @@ export function AdminReservationsPage() {
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         ),
-    [query, reservations],
+    [query, reservations, statusFilter],
   );
 
   const pendingCount = reservations.filter(
@@ -67,7 +70,11 @@ export function AdminReservationsPage() {
     }
 
     if (action === "reject") {
-      rejectReservation(reservationId);
+      const note = rejectionReason.trim();
+      if (!note) {
+        return;
+      }
+      rejectReservation(reservationId, note);
       return;
     }
 
@@ -143,6 +150,23 @@ export function AdminReservationsPage() {
           />
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm outline-none"
+          >
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="delivered">Delivered</option>
+          </select>
+          <div className="rounded-full bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700">
+            Showing {activeReservations.length} reservations
+          </div>
+        </div>
+
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {activeReservations.map((reservation) => (
             <article
@@ -198,24 +222,26 @@ export function AdminReservationsPage() {
                   <>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setRejectionReason("");
                         setConfirmation({
                           reservationId: reservation.id,
                           action: "approve",
-                        })
-                      }
+                        });
+                      }}
                       className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
                     >
                       Approve reservation
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setRejectionReason("");
                         setConfirmation({
                           reservationId: reservation.id,
                           action: "reject",
-                        })
-                      }
+                        });
+                      }}
                       className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                     >
                       Reject
@@ -226,24 +252,26 @@ export function AdminReservationsPage() {
                   <>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setRejectionReason("");
                         setConfirmation({
                           reservationId: reservation.id,
                           action: "deliver",
-                        })
-                      }
+                        });
+                      }}
                       className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
                     >
                       Confirm delivery
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setRejectionReason("");
                         setConfirmation({
                           reservationId: reservation.id,
                           action: "reject",
-                        })
-                      }
+                        });
+                      }}
                       className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                     >
                       Reject
@@ -291,12 +319,24 @@ export function AdminReservationsPage() {
                   {confirmation?.action === "approve"
                     ? "Status will change from pending to approved."
                     : confirmation?.action === "reject"
-                      ? "Status will change to rejected and move to history."
+                      ? "Status will change to rejected, move to history, and save your note."
                       : "Status will change from approved to delivered and move to history."}
                 </p>
               </div>
             </div>
           </div>
+
+          {confirmation?.action === "reject" ? (
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              Rejection reason
+              <textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Write why this reservation is being rejected"
+                className="min-h-[120px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+              />
+            </label>
+          ) : null}
 
           <div className="flex flex-wrap justify-end gap-3">
             <button
@@ -313,6 +353,7 @@ export function AdminReservationsPage() {
                   runAction(confirmation.reservationId, confirmation.action);
                 }
                 setConfirmation(null);
+                setRejectionReason("");
               }}
               className={`rounded-xl px-4 py-2 text-sm font-semibold text-white ${
                 confirmation?.action === "approve"

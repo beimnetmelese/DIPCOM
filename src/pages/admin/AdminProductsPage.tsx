@@ -13,6 +13,7 @@ const emptyForm = {
   brand: "",
   categoryId: "",
   imageFile: null as File | null,
+  condition: "new",
 };
 
 const normalizeIntegerInput = (value: string) =>
@@ -117,6 +118,7 @@ export function AdminProductsPage() {
       stockInput: String(product.stock),
       brand: product.brand,
       categoryId: product.categoryId,
+      condition: (product as any).condition ?? "new",
       imageFile: null,
     });
     setImagePreview(product.imageUrl ?? "");
@@ -158,6 +160,7 @@ export function AdminProductsPage() {
       price: parsedPrice,
       stock: parsedStock,
       brand: form.brand,
+      condition: (form as any).condition ?? "new",
       categoryId: form.categoryId,
       imageFile: form.imageFile,
       category: selectedCategory.name,
@@ -544,6 +547,24 @@ export function AdminProductsPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Condition
+              <select
+                value={(form as any).condition ?? "new"}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    condition: event.target.value,
+                  }))
+                }
+                className="rounded-xl border border-orange-200 px-3 py-2 text-sm"
+              >
+                <option value="new">Brand New</option>
+                <option value="used">Used</option>
+              </select>
+            </label>
           </div>
           <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-4">
             <div className="flex items-start gap-3">

@@ -408,6 +408,18 @@ export function AdminReservationHistoryPage() {
                     </p>
                   </div>
                 </div>
+
+                {reservation.status === "rejected" ? (
+                  <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                      Rejection reason
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">
+                      {reservation.rejectionReason ||
+                        "No rejection reason was provided."}
+                    </p>
+                  </div>
+                ) : null}
               </article>
             );
           })}

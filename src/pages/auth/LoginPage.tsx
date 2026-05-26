@@ -3,10 +3,13 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
+  LoaderCircle,
   KeyRound,
   Mail,
   ShieldCheck,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
@@ -17,30 +20,37 @@ export function LoginPage() {
   const { login, currentUser } = useAppContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = await login(email, password);
-    setMessage(result.message);
+    setIsSubmitting(true);
+    try {
+      const result = await login(email, password);
+      setMessage(result.message);
 
-    if (result.ok) {
-      if (result.role === "admin") {
-        navigate("/admin");
-        return;
+      if (result.ok) {
+        if (result.role === "admin") {
+          navigate("/admin");
+          return;
+        }
+
+        if (result.role === "staff") {
+          navigate("/staff/products");
+          return;
+        }
+
+        if (result.role === "seller" && result.sellerStatus !== "approved") {
+          navigate("/seller/pending");
+          return;
+        }
+
+        navigate("/seller");
       }
-
-      if (result.role === "staff") {
-        navigate("/staff/products");
-        return;
-      }
-
-      if (result.role === "seller" && result.sellerStatus === "pending") {
-        navigate("/seller/pending");
-        return;
-      }
-
-      navigate("/seller");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -129,20 +139,42 @@ export function LoginPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
                 <KeyRound className="h-4 w-4 text-slate-400" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full bg-transparent outline-none placeholder:text-slate-400"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="text-slate-400 hover:text-slate-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </label>
             <motion.button
               whileTap={{ scale: 0.98 }}
               type="submit"
+              disabled={isSubmitting}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Sign In <ArrowRight className="h-4 w-4" />
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </motion.button>
           </form>
 

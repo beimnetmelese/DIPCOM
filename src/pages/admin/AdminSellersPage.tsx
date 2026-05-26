@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   Clock3,
   LoaderCircle,
+  MapPin,
+  RefreshCw,
   Search,
   ShieldX,
   Users,
@@ -11,11 +13,19 @@ import {
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import type { SellerStatus } from "../../types.ts";
 
 export function AdminSellersPage() {
-  const { sellers, approveSeller, rejectSeller, updateSellerDiscount } =
-    useAppContext();
+  const {
+    sellers,
+    approveSeller,
+    rejectSeller,
+    removeSeller,
+    reactivateSeller,
+    updateSellerDiscount,
+  } = useAppContext();
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [discountInputs, setDiscountInputs] = useState<Record<string, string>>(
     {},
   );
@@ -24,6 +34,8 @@ export function AdminSellersPage() {
     sellerId: string;
     action: "approve" | "reject" | "remove";
   } | null>(null);
+  const [removalReason, setRemovalReason] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const normalizeIntegerInput = (value: string) =>
     value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
@@ -39,37 +51,52 @@ export function AdminSellersPage() {
     );
   }, [sellers]);
 
-  const filteredSellers = useMemo(() => {
+  const activeSellers = useMemo(() => {
     return [...sellers]
-      .filter((seller) =>
-        `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
+      .filter((seller) => !seller.removed)
+      .filter((seller) => {
+        const searchable =
+          `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber} ${seller.location ?? ""} ${seller.tinNumber ?? ""}`.toLowerCase();
+        return searchable.includes(query.toLowerCase());
+      })
+      .filter(
+        (seller) => statusFilter === "all" || seller.status === statusFilter,
       )
       .sort((a, b) => {
-        const order = { pending: 0, approved: 1, rejected: 2 } as const;
+        const order: Record<SellerStatus, number> = {
+          pending: 0,
+          approved: 1,
+          rejected: 2,
+          removed: 3,
+        };
         const statusDiff = order[a.status] - order[b.status];
-        if (statusDiff !== 0) {
-          return statusDiff;
-        }
-
+        if (statusDiff !== 0) return statusDiff;
         return a.businessName.localeCompare(b.businessName);
       });
+  }, [query, sellers, statusFilter]);
+
+  const removedSellers = useMemo(() => {
+    return [...sellers]
+      .filter((seller) => seller.removed)
+      .filter((seller) => {
+        const searchable =
+          `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber} ${seller.location ?? ""} ${seller.tinNumber ?? ""} ${seller.removalReason ?? ""}`.toLowerCase();
+        return searchable.includes(query.toLowerCase());
+      })
+      .sort((a, b) => a.businessName.localeCompare(b.businessName));
   }, [query, sellers]);
 
-  const pendingCount = sellers.filter(
+  const pendingCount = activeSellers.filter(
     (seller) => seller.status === "pending",
   ).length;
-  const approvedCount = sellers.filter(
+  const approvedCount = activeSellers.filter(
     (seller) => seller.status === "approved",
   ).length;
-  const rejectedCount = sellers.filter(
+  const rejectedCount = activeSellers.filter(
     (seller) => seller.status === "rejected",
   ).length;
-
-  const activeCount = sellers.filter(
-    (seller) => seller.status !== "rejected",
-  ).length;
+  const removedCount = removedSellers.length;
+  const activeCount = activeSellers.length;
 
   const runAction = (
     sellerId: string,
@@ -77,10 +104,24 @@ export function AdminSellersPage() {
   ) => {
     if (action === "approve") {
       approveSeller(sellerId);
-      return;
+      return true;
     }
 
-    rejectSeller(sellerId);
+    if (action === "reject") {
+      const note = rejectionReason.trim();
+      if (!note) return false;
+      void rejectSeller(sellerId, note);
+      return true;
+    }
+
+    if (action === "remove") {
+      const note = removalReason.trim();
+      if (!note) return false;
+      void removeSeller(sellerId, note);
+      return true;
+    }
+
+    return true;
   };
 
   const saveSellerDiscount = async (sellerId: string) => {
@@ -136,9 +177,15 @@ export function AdminSellersPage() {
           icon={<ShieldX className="h-5 w-5" />}
         />
         <StatCard
-          title="Total Sellers"
+          title="Removed Sellers"
+          value={String(removedCount)}
+          note="Accounts marked as removed"
+          icon={<ShieldX className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Total Active"
           value={String(activeCount)}
-          note="Non-rejected seller accounts"
+          note="Sellers not marked removed"
           icon={<Users className="h-5 w-5" />}
         />
       </div>
@@ -147,10 +194,11 @@ export function AdminSellersPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-heading text-2xl font-bold text-slate-900">
-              Seller Approval Queue
+              Active Seller Queue
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Search seller accounts by name, business, or email.
+              Search active seller accounts by name, business, email, location,
+              or TIN.
             </p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
@@ -168,8 +216,24 @@ export function AdminSellersPage() {
           />
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm outline-none"
+          >
+            <option value="all">All active statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <div className="rounded-full bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700">
+            Showing {activeSellers.length} sellers
+          </div>
+        </div>
+
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
-          {filteredSellers.map((seller) => (
+          {activeSellers.map((seller) => (
             <article
               key={seller.id}
               className="rounded-[1.75rem] border border-orange-100 bg-gradient-to-br from-white to-orange-50 p-5 shadow-sm"
@@ -185,15 +249,16 @@ export function AdminSellersPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     {seller.phoneNumber}
                   </p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-500">
+                    <MapPin className="h-4 w-4" />
+                    {seller.location}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    TIN: {seller.tinNumber}
+                  </p>
                 </div>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    seller.status === "approved"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : seller.status === "rejected"
-                        ? "bg-rose-100 text-rose-700"
-                        : "bg-amber-100 text-amber-700"
-                  }`}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${seller.status === "approved" ? "bg-emerald-100 text-emerald-700" : seller.status === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}
                 >
                   {seller.status}
                 </span>
@@ -230,15 +295,30 @@ export function AdminSellersPage() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() =>
-                      setConfirmation({ sellerId: seller.id, action: "remove" })
-                    }
+                    onClick={() => {
+                      setRemovalReason("");
+                      setConfirmation({
+                        sellerId: seller.id,
+                        action: "remove",
+                      });
+                    }}
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Remove
                   </button>
                 )}
               </div>
+
+              {seller.status === "rejected" && seller.rejectionReason ? (
+                <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                    Rejection reason
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">
+                    {seller.rejectionReason}
+                  </p>
+                </div>
+              ) : null}
 
               <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr),auto] sm:items-end">
                 <label className="text-sm font-semibold text-slate-700">
@@ -285,9 +365,31 @@ export function AdminSellersPage() {
                         {confirmation.action === "approve"
                           ? "This seller will be approved and can log in immediately."
                           : confirmation.action === "reject"
-                            ? "This seller will be rejected and moved out of the active queue."
+                            ? "This seller will be rejected, moved out of the active queue, and the note will be saved."
                             : "This seller will be removed from the approved list."}
                       </p>
+                      {confirmation.action === "reject" ? (
+                        <textarea
+                          value={rejectionReason}
+                          onChange={(event) =>
+                            setRejectionReason(event.target.value)
+                          }
+                          placeholder="Enter the reason for rejecting this seller"
+                          className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none"
+                          rows={3}
+                        />
+                      ) : null}
+                      {confirmation.action === "remove" ? (
+                        <textarea
+                          value={removalReason}
+                          onChange={(event) =>
+                            setRemovalReason(event.target.value)
+                          }
+                          placeholder="Enter the reason for removing this seller"
+                          className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none"
+                          rows={3}
+                        />
+                      ) : null}
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
@@ -301,16 +403,17 @@ export function AdminSellersPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        runAction(seller.id, confirmation.action);
-                        setConfirmation(null);
+                        const completed = runAction(
+                          seller.id,
+                          confirmation.action,
+                        );
+                        if (completed) {
+                          setConfirmation(null);
+                          setRemovalReason("");
+                          setRejectionReason("");
+                        }
                       }}
-                      className={`rounded-xl px-3 py-2 text-xs font-semibold text-white ${
-                        confirmation.action === "approve"
-                          ? "bg-emerald-600"
-                          : confirmation.action === "reject"
-                            ? "bg-rose-600"
-                            : "bg-slate-900"
-                      }`}
+                      className={`rounded-xl px-3 py-2 text-xs font-semibold text-white ${confirmation.action === "approve" ? "bg-emerald-600" : confirmation.action === "reject" ? "bg-rose-600" : "bg-slate-900"}`}
                     >
                       Yes, {confirmation.action}
                     </button>
@@ -319,6 +422,82 @@ export function AdminSellersPage() {
               ) : null}
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-rose-100 bg-white p-5 shadow-soft sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-slate-900">
+              Removed Sellers
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              These sellers are hidden from the active queue, but their status
+              and removal reason stay visible here.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+            <ShieldX className="h-4 w-4" /> {removedSellers.length} removed
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          {removedSellers.length > 0 ? (
+            removedSellers.map((seller) => (
+              <article
+                key={seller.id}
+                className="rounded-[1.75rem] border border-rose-100 bg-gradient-to-br from-white to-rose-50 p-5 shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-heading text-xl font-semibold text-slate-900">
+                      {seller.businessName}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {seller.name} · {seller.email}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {seller.phoneNumber}
+                    </p>
+                    <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-500">
+                      <MapPin className="h-4 w-4" />
+                      {seller.location}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      TIN: {seller.tinNumber}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Removal reason:{" "}
+                      {seller.removalReason || "No reason provided"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Removed at:{" "}
+                      {seller.removedAt
+                        ? new Date(seller.removedAt).toLocaleString()
+                        : "Unknown"}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                    removed
+                  </span>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void reactivateSeller(seller.id)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    <RefreshCw className="h-4 w-4" /> Reactivate seller
+                  </button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-rose-200 bg-rose-50/40 p-6 text-sm text-slate-600 xl:col-span-2">
+              No removed sellers yet.
+            </div>
+          )}
         </div>
       </section>
     </AnimatedPage>

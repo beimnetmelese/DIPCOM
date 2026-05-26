@@ -249,6 +249,18 @@ export function SellerReservationsPage() {
                     </p>
                   </div>
                 </div>
+
+                {reservation.status === "rejected" &&
+                reservation.rejectionReason ? (
+                  <div className="relative border-t border-slate-200/70 bg-slate-50/80 px-5 py-4 sm:px-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Rejection note
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">
+                      {reservation.rejectionReason}
+                    </p>
+                  </div>
+                ) : null}
               </article>
             );
           })}

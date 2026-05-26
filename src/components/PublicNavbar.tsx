@@ -21,7 +21,7 @@ export function PublicNavbar() {
       ? "/admin"
       : currentUser?.role === "staff"
         ? "/staff/products"
-        : currentUser?.sellerStatus === "pending"
+        : currentUser?.sellerStatus !== "approved"
           ? "/seller/pending"
           : "/seller";
 

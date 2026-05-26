@@ -4,6 +4,9 @@ import {
   ArrowRight,
   BadgeCheck,
   Building2,
+  Eye,
+  EyeOff,
+  LoaderCircle,
   Lock,
   Mail,
   Phone,
@@ -17,30 +20,41 @@ export function RegisterPage() {
   const { registerSeller } = useAppContext();
   const phonePrefix = "+251";
   const [submitted, setSubmitted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     businessName: "",
+    location: "",
+    tinNumber: "",
     phoneNumber: "",
     password: "",
   });
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsSubmitting(true);
     const fullPhoneNumber = `${phonePrefix}${form.phoneNumber}`;
-    const result = await registerSeller({
-      ...form,
-      phoneNumber: fullPhoneNumber,
-    });
-    if (result.ok) {
-      setSubmitted(true);
-      setForm({
-        name: "",
-        email: "",
-        businessName: "",
-        phoneNumber: "",
-        password: "",
+    try {
+      const result = await registerSeller({
+        ...form,
+        phoneNumber: fullPhoneNumber,
       });
+      if (result.ok) {
+        setSubmitted(true);
+        setForm({
+          name: "",
+          email: "",
+          businessName: "",
+          location: "",
+          tinNumber: "",
+          phoneNumber: "",
+          password: "",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -172,6 +186,42 @@ export function RegisterPage() {
               </div>
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              Location
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
+                <Building2 className="h-4 w-4 text-slate-400" />
+                <input
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                  placeholder="Fully qualified address"
+                  value={form.location}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      location: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              TIN Number
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
+                <Building2 className="h-4 w-4 text-slate-400" />
+                <input
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                  placeholder="TIN number"
+                  value={form.tinNumber}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      tinNumber: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Phone Number
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
                 <Phone className="h-4 w-4 text-slate-400" />
@@ -205,7 +255,7 @@ export function RegisterPage() {
                 <input
                   className="w-full bg-transparent outline-none placeholder:text-slate-400"
                   placeholder="Password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(event) =>
                     setForm((prev) => ({
@@ -215,14 +265,36 @@ export function RegisterPage() {
                   }
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="text-slate-400 hover:text-slate-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </label>
             <motion.button
               whileTap={{ scale: 0.98 }}
               type="submit"
+              disabled={isSubmitting}
               className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Submit Registration <ArrowRight className="h-4 w-4" />
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Registration <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </motion.button>
           </form>
         </motion.div>

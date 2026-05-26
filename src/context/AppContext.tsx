@@ -24,6 +24,7 @@ import type {
   SellerProduct,
   SellerProductUpsertPayload,
   SiteSettings,
+  SellerStatus,
   ToastMessage,
 } from "../types.ts";
 import {
@@ -40,6 +41,17 @@ interface RegisterPayload {
   businessName: string;
   phoneNumber: string;
   password: string;
+  location?: string;
+  tinNumber?: string;
+}
+
+interface ResubmitRejectedSellerPayload {
+  name: string;
+  email: string;
+  businessName: string;
+  phoneNumber: string;
+  location?: string;
+  tinNumber?: string;
 }
 
 interface AdminRegisterPayload {
@@ -57,7 +69,7 @@ interface LoginResult {
   ok: boolean;
   message: string;
   role?: AuthUser["role"];
-  sellerStatus?: "approved" | "pending" | "rejected";
+  sellerStatus?: SellerStatus;
 }
 
 interface ReservationResult {
@@ -81,10 +93,15 @@ interface AppContextValue {
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   registerSeller: (payload: RegisterPayload) => Promise<LoginResult>;
+  resubmitRejectedSeller: (
+    payload: ResubmitRejectedSellerPayload,
+  ) => Promise<LoginResult>;
   registerAdmin: (payload: AdminRegisterPayload) => Promise<void>;
   deleteAdminAccount: (adminId: string) => Promise<void>;
   approveSeller: (sellerId: string) => Promise<void>;
-  rejectSeller: (sellerId: string) => Promise<void>;
+  rejectSeller: (sellerId: string, reason: string) => Promise<void>;
+  removeSeller: (sellerId: string, reason: string) => Promise<void>;
+  reactivateSeller: (sellerId: string) => Promise<void>;
   updateSellerDiscount: (sellerId: string, value: number) => Promise<void>;
   addCategory: (payload: CategoryPayload) => Promise<void>;
   addProduct: (payload: ProductUpsertPayload) => Promise<void>;
@@ -105,7 +122,7 @@ interface AppContextValue {
   ) => Promise<ReservationResult>;
   markNotificationRead: (notificationId: string) => Promise<void>;
   approveReservation: (reservationId: string) => Promise<void>;
-  rejectReservation: (reservationId: string) => Promise<void>;
+  rejectReservation: (reservationId: string, reason: string) => Promise<void>;
   confirmReservationDelivery: (reservationId: string) => Promise<void>;
   enableBrowserNotifications: () => Promise<void>;
   setCommissionPercent: (value: number) => Promise<void>;
@@ -117,8 +134,16 @@ type ApiUser = {
   name: string;
   email: string;
   role: "admin" | "seller" | "staff";
-  sellerStatus?: "approved" | "pending" | "rejected";
+  businessName?: string;
+  phoneNumber?: string;
+  location?: string;
+  tinNumber?: string;
+  sellerStatus?: "approved" | "pending" | "rejected" | "removed";
   sellerDiscountPercent?: string | number;
+  removalReason?: string;
+  rejectionReason?: string;
+  removedAt?: string;
+  rejectedAt?: string;
 };
 
 type ApiCategory = {
@@ -134,7 +159,14 @@ type ApiSeller = {
   email: string;
   businessName: string;
   phoneNumber?: string;
-  sellerStatus?: "approved" | "pending" | "rejected";
+  location?: string;
+  tinNumber?: string;
+  sellerStatus?: "approved" | "pending" | "rejected" | "removed";
+  removed?: boolean;
+  removalReason?: string;
+  removedAt?: string;
+  rejectionReason?: string;
+  rejectedAt?: string;
   status?: "approved" | "pending" | "rejected";
   sellerDiscountPercent?: string | number;
   joinedAt?: string;
@@ -187,6 +219,7 @@ type ApiReservation = {
   createdAt: string;
   deliveredAt?: string;
   rejectedAt?: string;
+  rejectionReason?: string;
 };
 
 type ApiNotification = {
@@ -292,13 +325,23 @@ function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
 }
 
 function mapSeller(seller: ApiSeller): Seller {
+  const isRemoved = Boolean(seller.removed);
   return {
     id: seller.id,
     name: seller.name,
     email: seller.email,
     businessName: seller.businessName,
     phoneNumber: seller.phoneNumber || contactPhone,
-    status: seller.sellerStatus ?? seller.status ?? "pending",
+    location: seller.location || "Addis Ababa",
+    tinNumber: seller.tinNumber || "000000000",
+    status: isRemoved
+      ? "removed"
+      : (seller.sellerStatus ?? seller.status ?? "pending"),
+    removed: isRemoved,
+    removalReason: seller.removalReason,
+    removedAt: seller.removedAt,
+    rejectionReason: seller.rejectionReason,
+    rejectedAt: seller.rejectedAt,
     sellerDiscountPercent: toNumber(seller.sellerDiscountPercent ?? 0),
     joinedAt:
       seller.joinedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
@@ -337,6 +380,7 @@ function mapReservation(reservation: ApiReservation): Reservation {
     createdAt: reservation.createdAt,
     deliveredAt: reservation.deliveredAt,
     rejectedAt: reservation.rejectedAt,
+    rejectionReason: reservation.rejectionReason,
   };
 }
 
@@ -485,6 +529,9 @@ async function buildCatalogFormData(payload: ProductUpsertPayload) {
   data.append("categoryId", payload.categoryId);
   if (payload.imageFile) {
     data.append("imageFile", await compressImageFile(payload.imageFile));
+  }
+  if ((payload as any).condition) {
+    data.append("condition", (payload as any).condition);
   }
   return data;
 }
@@ -877,12 +924,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: response.user.id,
         name: response.user.name,
         email: response.user.email,
+        businessName: response.user.businessName,
+        phoneNumber: response.user.phoneNumber,
+        location: response.user.location,
+        tinNumber: response.user.tinNumber,
         role: response.user.role,
         sellerStatus: response.user.sellerStatus,
         sellerDiscountPercent:
           response.user.sellerDiscountPercent != null
             ? toNumber(response.user.sellerDiscountPercent)
             : undefined,
+        removalReason: response.user.removalReason,
+        rejectionReason: response.user.rejectionReason,
+        removedAt: response.user.removedAt,
+        rejectedAt: response.user.rejectedAt,
       };
 
       setCurrentUser(user);
@@ -917,6 +972,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     name,
     email,
     businessName,
+    location,
+    tinNumber,
     phoneNumber,
     password,
   }: RegisterPayload): Promise<LoginResult> => {
@@ -930,6 +987,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             name,
             email,
             businessName,
+            location,
+            tinNumber,
             phoneNumber,
             password,
           }),
@@ -947,6 +1006,69 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Registration failed.";
+      return { ok: false, message };
+    }
+  };
+
+  const resubmitRejectedSeller = async ({
+    name,
+    email,
+    businessName,
+    location,
+    tinNumber,
+    phoneNumber,
+  }: ResubmitRejectedSellerPayload): Promise<LoginResult> => {
+    try {
+      const response = await apiRequest<ApiUser>("/accounts/me/", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          businessName,
+          location,
+          tinNumber,
+          phoneNumber,
+        }),
+      });
+
+      const nextUser: AuthUser = {
+        id: response.id,
+        name: response.name,
+        email: response.email,
+        businessName: response.businessName,
+        phoneNumber: response.phoneNumber,
+        location: response.location,
+        tinNumber: response.tinNumber,
+        role: response.role,
+        sellerStatus: response.sellerStatus,
+        sellerDiscountPercent:
+          response.sellerDiscountPercent != null
+            ? toNumber(response.sellerDiscountPercent)
+            : undefined,
+        removalReason: response.removalReason,
+        rejectionReason: response.rejectionReason,
+        removedAt: response.removedAt,
+        rejectedAt: response.rejectedAt,
+      };
+
+      setCurrentUser(nextUser);
+      await refreshForCurrentUser(nextUser.role);
+      pushToast(
+        "Profile resubmitted",
+        "Your seller account is pending review again.",
+        "success",
+      );
+
+      return {
+        ok: true,
+        message: "Seller profile resubmitted.",
+        role: nextUser.role,
+        sellerStatus: nextUser.sellerStatus,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Resubmission failed.";
       return { ok: false, message };
     }
   };
@@ -1002,10 +1124,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const rejectSeller = async (sellerId: string) => {
+  const rejectSeller = async (sellerId: string, reason: string) => {
     try {
       await apiRequest(`/accounts/sellers/${sellerId}/reject/`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
       });
       await refreshPrivateData(currentUser?.role);
       pushToast(
@@ -1016,6 +1140,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to reject seller.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const removeSeller = async (sellerId: string, reason: string) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/remove/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast("Seller removed", "Removal reason was saved.", "warning");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to remove seller.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const reactivateSeller = async (sellerId: string) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/reactivate/`, {
+        method: "POST",
+      });
+      await refreshPrivateData(currentUser?.role);
+      pushToast(
+        "Seller reactivated",
+        "The seller account is active again.",
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to reactivate seller.";
       pushToast("Action failed", message, "warning");
     }
   };
@@ -1248,10 +1406,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const rejectReservation = async (reservationId: string) => {
+  const rejectReservation = async (reservationId: string, reason: string) => {
     try {
       await apiRequest(`/reservations/reservations/${reservationId}/reject/`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
       });
       await refreshPrivateData(currentUser?.role);
       pushToast(
@@ -1319,10 +1479,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       registerSeller,
+      resubmitRejectedSeller,
       registerAdmin,
       deleteAdminAccount,
       approveSeller,
       rejectSeller,
+      removeSeller,
+      reactivateSeller,
       updateSellerDiscount,
       addCategory,
       addProduct,

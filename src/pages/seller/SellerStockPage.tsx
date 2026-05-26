@@ -13,6 +13,7 @@ const emptyForm = {
   brand: "",
   categoryId: "",
   imageFile: null as File | null,
+  condition: "new",
 };
 
 const normalizeIntegerInput = (value: string) =>
@@ -102,6 +103,7 @@ export function SellerStockPage() {
       stockInput: String(product.stock),
       brand: product.brand,
       categoryId: product.categoryId,
+      condition: (product as any).condition ?? "new",
       imageFile: null,
     });
     setImagePreview(product.imageUrl ?? "");
@@ -144,6 +146,7 @@ export function SellerStockPage() {
       price: parsedPrice,
       stock: parsedStock,
       brand: form.brand,
+      condition: (form as any).condition ?? "new",
       categoryId: form.categoryId,
       imageFile: form.imageFile,
       category: selectedCategory.name,
@@ -485,6 +488,24 @@ export function SellerStockPage() {
                 }
                 required
               />
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Condition
+              <select
+                className="rounded-xl border border-orange-200 px-3 py-2 text-sm"
+                value={(form as any).condition ?? "new"}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    condition: event.target.value,
+                  }))
+                }
+              >
+                <option value="new">Brand New</option>
+                <option value="used">Used</option>
+              </select>
             </label>
           </div>
           <button
