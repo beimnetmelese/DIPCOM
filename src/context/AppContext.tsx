@@ -239,20 +239,19 @@ const defaultSiteSettings: SiteSettings = {
   id: 1,
   commissionPercent: 10,
   contactPhone: "+2519-79-80-81-82 / +2519-49-80-49-49",
-  contactAddress: "Betechemari Ymichemeru Kutroch, Addis Ababa, Ethiopia.",
+  contactAddress: "Near CBE Temenja Yaj branch, Addis Ababa, Ethiopia.",
   businessHours:
     "Monday - Saturday, 8:30 AM - 6:00 PM (closed on Sundays). Reach us during these hours for importing, maintenance, training, toner refilling, and consultation.",
   tiktokUrl: "https://www.tiktok.com/@dipcomtechnologies",
   mapUrl:
-    "https://www.google.com/maps?q=Betechemari%20Ymichemeru%20Kutroch%2C%20Addis%20Ababa%2C%20Ethiopia&output=embed",
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.756574010863524!3d8.997132691025689!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1780393067731!5m2!1sen!2set",
   heroTagline: "Digital Printing & Office Equipment Solutions",
   heroTitle: "Reliable office technology solutions for every workplace.",
   heroDescription:
     "DIPCOM Technology Solutions provides digital printing and office equipment services with more than 18 years of industry experience. We support organizations, businesses, institutions, and individuals with importing, maintenance, training, toner refilling, and consultation services that improve productivity, reduce operating costs, and keep workflows efficient.",
-  aboutTitle:
-    "Eighteen Years of Trusted Digital Printing and Office Equipment Service",
+  aboutTitle: "About Us",
   aboutDescription:
-    "DIPCOM Technology Solutions is a professional technology company specializing in digital printing and office equipment solutions. Our team combines technical expertise, modern equipment knowledge, professional customer handling, and practical industry experience to deliver importing, maintenance, training, toner refilling, and consultation under one trusted brand. We are committed to quality service, customer satisfaction, innovation, and long-term support.",
+    "DIPCOM Technology Solutions is a professional technology company specializing in digital printing and office equipment solutions. With more than 18+ years of industry experience, the company provides reliable importing, maintenance, training, toner refilling, and consultation services for organizations, businesses, institutions, and individuals.\n\nThe company was established with the goal of delivering high-quality office technology solutions while helping organizations improve productivity, reduce operational costs, and maintain efficient workflows.\n\nDIPCOM combines technical expertise, modern equipment knowledge, professional customer handling, and practical industry experience to provide complete office equipment solutions under one trusted brand.\n\nOur commitment to quality service, customer satisfaction, innovation, and professional support has allowed us to become a trusted partner for many organizations.",
   yearsExperience: 18,
   studentsTrained: 200,
   updatedAt: undefined,

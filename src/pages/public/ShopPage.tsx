@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Package, PhoneCall, Search } from "lucide-react";
+import { Package, PhoneCall, Search } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
@@ -9,7 +9,7 @@ import { contactPhone } from "../../utils/branding.ts";
 import { currency } from "../../utils/format.ts";
 
 export function ShopPage() {
-  const { categories, products, siteSettings } = useAppContext();
+  const { categories, products } = useAppContext();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [brand, setBrand] = useState("all");
@@ -231,17 +231,6 @@ export function ShopPage() {
                     </p>
                     <p className="font-semibold text-slate-900">
                       {contactPhone}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Address
-                    </p>
-                    <p className="font-semibold text-slate-900">
-                      {siteSettings.contactAddress}
                     </p>
                   </div>
                 </div>

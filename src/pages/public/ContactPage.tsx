@@ -1,19 +1,16 @@
 import {
   ExternalLink,
+  Clock3,
   MapPinned,
   PhoneCall,
   Sparkles,
-  Clock3,
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 
 export function ContactPage() {
   const { siteSettings } = useAppContext();
-  const mapUrl = siteSettings.mapUrl.includes("embed")
-    ? siteSettings.mapUrl
-    : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set";
-
+  const mapUrl = siteSettings.mapUrl;
   return (
     <AnimatedPage>
       <section className="overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-soft">
@@ -31,8 +28,8 @@ export function ContactPage() {
               and consultation.
             </h1>
             <p className="mt-4 max-w-2xl text-white/90">
-              Visit us, call us, or use the map below to find our office at
-              Betechemari Ymichemeru Kutroch in Addis Ababa.
+              Visit us, call us, or use the map below to find our office near
+              CBE Temenja Yaj branch in Addis Ababa.
             </p>
           </div>
         </div>
@@ -51,22 +48,6 @@ export function ContactPage() {
               <div className="rounded-2xl border border-orange-100 bg-white p-4">
                 <div className="flex items-start gap-3">
                   <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
-                    <PhoneCall className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Phone
-                    </p>
-                    <p className="mt-1 text-base font-semibold text-slate-900">
-                      {siteSettings.contactPhone}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-orange-100 bg-white p-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
                     <MapPinned className="h-5 w-5" />
                   </div>
                   <div>
@@ -75,6 +56,22 @@ export function ContactPage() {
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
                       {siteSettings.contactAddress}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <PhoneCall className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Phone
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                      {siteSettings.contactPhone}
                     </p>
                   </div>
                 </div>

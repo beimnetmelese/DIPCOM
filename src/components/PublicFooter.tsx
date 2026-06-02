@@ -1,4 +1,4 @@
-import { ArrowUpRight, Mail, MapPinned, PhoneCall } from "lucide-react";
+import { ArrowUpRight, Mail, PhoneCall } from "lucide-react";
 import { Link } from "react-router-dom";
 import { companyLogo, companyName, contactPhone } from "../utils/branding.ts";
 
@@ -57,10 +57,6 @@ export function PublicFooter() {
             <div className="flex items-start gap-3">
               <Mail className="mt-0.5 h-4 w-4 text-orange-300" />
               <span>support@dipcomtechnologies.com</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPinned className="mt-0.5 h-4 w-4 text-orange-300" />
-              <span>Betechemari Ymichemeru Kutroch, Addis Ababa</span>
             </div>
             <a
               href="https://www.tiktok.com/@dipcomtechnologies"

@@ -222,18 +222,24 @@ export function HomePage() {
         <article className="overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-soft">
           <div className="border-b border-orange-100 px-6 py-5 sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
-              Why clients choose us
+              Why Choose Us
             </p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-slate-900">
-              More than a supplier, a long-term service partner
+              Why Choose Us
             </h2>
           </div>
           <div className="grid gap-4 p-6 sm:p-8">
             {[
+              "18+ years of industry experience",
+              "Skilled and experienced technical professionals",
+              "Reliable maintenance and support services",
               "High-quality imported office equipment",
-              "Skilled maintenance and support services",
+              "Affordable and efficient toner solutions",
               "Practical hands-on technical training",
+              "Fast customer support and response",
+              "Professional consultation services",
               "Long-term customer relationship approach",
+              "Complete office technology solutions under one company",
             ].map((item) => (
               <div
                 key={item}

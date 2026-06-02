@@ -1,40 +1,24 @@
 import { motion } from "framer-motion";
-import {
-  Award,
-  CheckCircle2,
-  GraduationCap,
-  MapPinned,
-  Sparkles,
-  Truck,
-  Users,
-  Wrench,
-} from "lucide-react";
+import { Award, CheckCircle2, Sparkles, Truck, Users, Wrench } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { companyLogo, companyName } from "../../utils/branding.ts";
 
-const stats = [
-  { value: "18+", label: "Years of experience" },
-  { value: "200+", label: "Teams trained" },
-  { value: "Office equipment", label: "Imported and maintained" },
-  { value: "Toner", label: "Refilled and supported" },
-];
-
 const pillars = [
   {
-    title: "Digital printing solutions",
+    title: "Importing",
     icon: <Truck className="h-5 w-5" />,
-    text: "DIPCOM Technology Solutions provides reliable digital printing and office equipment that helps organizations work efficiently.",
+    text: "Reliable importing services for digital printing and office equipment solutions.",
   },
   {
-    title: "Maintenance and support",
+    title: "Maintenance",
     icon: <Wrench className="h-5 w-5" />,
-    text: "Our technical team handles maintenance, repair, and practical support to keep equipment in good working condition.",
+    text: "Practical maintenance and support services that help organizations maintain efficient workflows.",
   },
   {
-    title: "Training and consultation",
-    icon: <GraduationCap className="h-5 w-5" />,
-    text: "We provide hands-on training, toner refilling guidance, and consultation for teams, institutions, businesses, and individuals.",
+    title: "Training",
+    icon: <Sparkles className="h-5 w-5" />,
+    text: "Hands-on technical training, toner refilling, and professional consultation under one trusted brand.",
   },
 ];
 
@@ -78,24 +62,9 @@ export function AboutPage() {
             <h1 className="mt-4 max-w-2xl font-heading text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
               {siteSettings.aboutTitle}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-white/88 sm:text-lg">
+            <p className="mt-5 max-w-2xl whitespace-pre-line text-base leading-8 text-white/88 sm:text-lg">
               {siteSettings.aboutDescription}
             </p>
-
-            <div className="mt-7 flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                <Award className="h-4 w-4 text-orange-300" />{" "}
-                {siteSettings.yearsExperience}+ years experience
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                <Users className="h-4 w-4 text-orange-300" />{" "}
-                {siteSettings.studentsTrained}+ students trained
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                <Sparkles className="h-4 w-4 text-orange-300" /> Premium service
-                quality
-              </div>
-            </div>
           </div>
 
           <motion.div
@@ -105,19 +74,22 @@ export function AboutPage() {
             className="rounded-[1.75rem] border border-white/15 bg-white/10 p-6 text-white shadow-2xl shadow-black/20 backdrop-blur"
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-white/10 bg-white/10 p-4"
-                >
-                  <p className="font-heading text-3xl font-bold text-white">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                <p className="font-heading text-3xl font-bold text-white">
+                  {siteSettings.yearsExperience}+
+                </p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                  Years of experience
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                <p className="font-heading text-3xl font-bold text-white">
+                  {siteSettings.studentsTrained}+
+                </p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                  Teams trained
+                </p>
+              </div>
             </div>
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
@@ -156,80 +128,84 @@ export function AboutPage() {
         ))}
       </section>
 
-      <section className="mt-10 grid gap-6 lg:grid-cols-[0.92fr,1.08fr]">
-        <article className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft sm:p-8 lg:col-span-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
-            Who we serve
+      <section className="mt-10 rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
+          Why Choose Us
+        </p>
+        <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
+          Why Choose Us
+        </h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            "18+ years of industry experience",
+            "Skilled and experienced technical professionals",
+            "Reliable maintenance and support services",
+            "High-quality imported office equipment",
+            "Affordable and efficient toner solutions",
+            "Practical hands-on technical training",
+            "Fast customer support and response",
+            "Professional consultation services",
+            "Long-term customer relationship approach",
+            "Complete office technology solutions under one company",
+          ].map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-3 rounded-2xl bg-orange-50/70 p-4"
+            >
+              <div className="rounded-lg bg-white p-2 text-orange-700 shadow-sm">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <p className="text-sm leading-7 text-slate-700">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10 rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
+              Gallery
+            </p>
+            <h3 className="mt-2 font-heading text-2xl font-bold text-slate-900">
+              A few moments from our service and support work
+            </h3>
+          </div>
+          <p className="max-w-md text-sm leading-7 text-slate-600">
+            A visual snapshot of the space where equipment is prepared,
+            maintained, trained on, and supported for our clients.
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-            Organizations, businesses, institutions, and individuals
-          </h2>
-          <div className="mt-6 space-y-4">
-            {[
-              "Organizations that need reliable office equipment and support",
-              "Businesses looking for maintenance and cost-effective service",
-              "Institutions that need toner refilling and practical training",
-              "Individuals who want consultation and setup guidance",
-            ].map((item) => (
-              <div
-                key={item}
-                className="flex items-start gap-3 rounded-2xl bg-orange-50/70 p-4"
+        </div>
+
+        <div className="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {galleryPhotos.map((image, index) => {
+            return (
+              <motion.div
+                key={image}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="group relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.15)] aspect-[4/3]"
               >
-                <div className="rounded-lg bg-white p-2 text-orange-700 shadow-sm">
-                  <CheckCircle2 className="h-4 w-4" />
+                <img
+                  src={image}
+                  alt={`DIPCOM gallery ${index + 1}`}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent opacity-80" />
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+                    Workshop {index + 1}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-white/92">
+                    Equipment support and preparation
+                  </p>
                 </div>
-                <p className="text-sm leading-7 text-slate-700">{item}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 border-t border-orange-100 pt-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
-                  Gallery
-                </p>
-                <h3 className="mt-2 font-heading text-2xl font-bold text-slate-900">
-                  A few moments from our service and support work
-                </h3>
-              </div>
-              <p className="max-w-md text-sm leading-7 text-slate-600">
-                A visual snapshot of the space where equipment is prepared,
-                maintained, trained on, and supported for our clients.
-              </p>
-            </div>
-
-            <div className="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {galleryPhotos.map((image, index) => {
-                return (
-                  <motion.div
-                    key={image}
-                    initial={{ opacity: 0, y: 14 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="group relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.15)] aspect-[4/3]"
-                  >
-                    <img
-                      src={image}
-                      alt={`DIPCOM gallery ${index + 1}`}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent opacity-80" />
-                    <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
-                        Workshop {index + 1}
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-white/92">
-                        Equipment support and preparation
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </article>
+              </motion.div>
+            );
+          })}
+        </div>
       </section>
 
       <section className="mt-10 rounded-[2rem] border border-orange-100 bg-gradient-to-br from-white to-orange-50 p-6 shadow-soft sm:p-8">
@@ -241,10 +217,6 @@ export function AboutPage() {
             <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
               Quality service, reliability, and support under one roof
             </h2>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-700">
-            <MapPinned className="h-4 w-4" /> Betechemari Ymichemeru Kutroch,
-            Addis Ababa
           </div>
         </div>
       </section>
