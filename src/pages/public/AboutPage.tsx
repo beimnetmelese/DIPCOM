@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Award, CheckCircle2, Sparkles, Truck, Users, Wrench } from "lucide-react";
+import { CheckCircle2, Sparkles, Truck, Wrench } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { companyLogo, companyName } from "../../utils/branding.ts";
