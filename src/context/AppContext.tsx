@@ -238,22 +238,21 @@ type ApiNotification = {
 const defaultSiteSettings: SiteSettings = {
   id: 1,
   commissionPercent: 10,
-  contactPhone: "+251 91 122 4323",
-  contactAddress:
-    "Next to CBE Temenja Yaj branch, Kirkos sub city woreda 11, Addis Ababa — a convenient landmark near central commercial areas, with easy street access and visitor parking.",
+  contactPhone: "+2519-79-80-81-82 / +2519-49-80-49-49",
+  contactAddress: "Betechemari Ymichemeru Kutroch, Addis Ababa, Ethiopia.",
   businessHours:
-    "Monday - Saturday, 8:30 AM - 6:00 PM (closed on Sundays). Our support desk is available during these hours for sales inquiries, technical assistance, and reseller coordination.",
+    "Monday - Saturday, 8:30 AM - 6:00 PM (closed on Sundays). Reach us during these hours for importing, maintenance, training, toner refilling, and consultation.",
   tiktokUrl: "https://www.tiktok.com/@dipcomtechnologies",
   mapUrl:
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.728265867298!2d38.75657401086354!3d8.99713269102569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b8584482eab63%3A0x2c55bad0b8eff98a!2sDipcom%20Technology%20Solutions!5e0!3m2!1sen!2set!4v1775917748282!5m2!1sen!2set",
-  heroTagline: "Comprehensive Stock Management & Reseller Platform",
-  heroTitle: "Comprehensive Stock Management and Reseller Platform.",
+    "https://www.google.com/maps?q=Betechemari%20Ymichemeru%20Kutroch%2C%20Addis%20Ababa%2C%20Ethiopia&output=embed",
+  heroTagline: "Digital Printing & Office Equipment Solutions",
+  heroTitle: "Reliable office technology solutions for every workplace.",
   heroDescription:
-    "Our platform brings together import operations, device repair services, and hands-on team training into a single coherent experience. It helps operations teams manage incoming shipments, track stock levels in real time, coordinate with reseller partners, and automate reservation workflows so customers receive accurate availability and timely delivery. Built with scalability and reliability in mind, the platform supports role-based access for admins, staff, and sellers, making it easy to run both retail and B2B reseller programs.",
+    "DIPCOM Technology Solutions provides digital printing and office equipment services with more than 18 years of industry experience. We support organizations, businesses, institutions, and individuals with importing, maintenance, training, toner refilling, and consultation services that improve productivity, reduce operating costs, and keep workflows efficient.",
   aboutTitle:
-    "Eighteen Years of Trusted Printer Import, Repair, and Training Expertise",
+    "Eighteen Years of Trusted Digital Printing and Office Equipment Service",
   aboutDescription:
-    "For nearly two decades, DIPCOM Technologies has specialized in importing high-quality printing hardware, providing expert repair services, and delivering practical training programs to technical teams and business users. Our engineers and trainers combine hands-on field experience with industry best practices to ensure reliable equipment performance, predictable maintenance schedules, and improved uptime. We focus on practical outcomes — reducing repair turnaround times, extending device lifecycles, and empowering reseller partners with sales and technical training that drives customer satisfaction and repeat business.",
+    "DIPCOM Technology Solutions is a professional technology company specializing in digital printing and office equipment solutions. Our team combines technical expertise, modern equipment knowledge, professional customer handling, and practical industry experience to deliver importing, maintenance, training, toner refilling, and consultation under one trusted brand. We are committed to quality service, customer satisfaction, innovation, and long-term support.",
   yearsExperience: 18,
   studentsTrained: 200,
   updatedAt: undefined,

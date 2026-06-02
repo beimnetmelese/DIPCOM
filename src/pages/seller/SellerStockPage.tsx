@@ -168,7 +168,7 @@ export function SellerStockPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl font-bold text-slate-900">
-            My Stock Management
+            My Office Technology Dashboard
           </h2>
           <p className="text-sm text-slate-500">
             Add, edit, and track only your own stock items.

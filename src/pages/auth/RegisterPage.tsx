@@ -72,14 +72,14 @@ export function RegisterPage() {
           <div className="relative flex h-full min-h-[520px] flex-col justify-between p-7 text-white sm:p-10">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
-                <Building2 className="h-4 w-4" /> Seller onboarding
+                <Building2 className="h-4 w-4" /> Business onboarding
               </span>
               <h1 className="mt-5 max-w-xl font-heading text-4xl font-bold leading-tight sm:text-5xl">
-                Create a polished seller profile for DIPCOM Technologies.
+                Create a business profile for DIPCOM Technology Solutions.
               </h1>
               <p className="mt-4 max-w-lg text-sm leading-7 text-white/85 sm:text-base">
-                Register your business, submit your profile, and wait for admin
-                approval before you start selling on the platform.
+                Register your business, submit your details, and wait for admin
+                approval before you access the seller workspace.
               </p>
             </div>
 

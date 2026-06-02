@@ -27,11 +27,12 @@ export function ContactPage() {
               <Sparkles className="h-4 w-4" /> Contact Us
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Reach us for support, demos, and reseller onboarding.
+              Reach us for importing, maintenance, training, toner refilling,
+              and consultation.
             </h1>
             <p className="mt-4 max-w-2xl text-white/90">
-              Visit us, call us, or use the map below to find our office near
-              the CBE Temenja Yaj branch in Addis Ababa.
+              Visit us, call us, or use the map below to find our office at
+              Betechemari Ymichemeru Kutroch in Addis Ababa.
             </p>
           </div>
         </div>
@@ -42,8 +43,8 @@ export function ContactPage() {
               Reach us directly
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              We are available for platform questions, demo requests, and
-              reseller onboarding.
+              We are available for office equipment inquiries, maintenance
+              requests, training, toner support, and consultation.
             </p>
 
             <div className="mt-6 space-y-4">
@@ -138,7 +139,7 @@ export function ContactPage() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="DIPCOM Technologies location"
+                title="DIPCOM Technology Solutions location"
                 className="h-full min-h-[420px] w-full"
               />
             </div>

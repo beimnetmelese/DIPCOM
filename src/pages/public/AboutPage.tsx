@@ -15,26 +15,26 @@ import { companyLogo, companyName } from "../../utils/branding.ts";
 
 const stats = [
   { value: "18+", label: "Years of experience" },
-  { value: "200+", label: "Students trained" },
-  { value: "Printers", label: "Imported and supplied" },
-  { value: "Repairs", label: "Handled with care" },
+  { value: "200+", label: "Teams trained" },
+  { value: "Office equipment", label: "Imported and maintained" },
+  { value: "Toner", label: "Refilled and supported" },
 ];
 
 const pillars = [
   {
-    title: "Importing printers",
+    title: "Digital printing solutions",
     icon: <Truck className="h-5 w-5" />,
-    text: "DIPCOM Technologies has long experience importing printers and accessories, selecting dependable products and preparing them for market.",
+    text: "DIPCOM Technology Solutions provides reliable digital printing and office equipment that helps organizations work efficiently.",
   },
   {
-    title: "Printer repairs",
+    title: "Maintenance and support",
     icon: <Wrench className="h-5 w-5" />,
-    text: "The team repairs printers, replaces damaged parts, and helps customers restore devices to reliable working condition.",
+    text: "Our technical team handles maintenance, repair, and practical support to keep equipment in good working condition.",
   },
   {
-    title: "Training programs",
+    title: "Training and consultation",
     icon: <GraduationCap className="h-5 w-5" />,
-    text: "They provide hands-on training for printer setup, maintenance, and practical troubleshooting for teams and learners.",
+    text: "We provide hands-on training, toner refilling guidance, and consultation for teams, institutions, businesses, and individuals.",
   },
 ];
 
@@ -56,7 +56,7 @@ export function AboutPage() {
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1800&q=80"
-            alt="DIPCOM Technologies team background"
+            alt={`${companyName} team background`}
             className="h-full w-full object-cover opacity-70"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/55 to-slate-950/20" />
@@ -124,9 +124,9 @@ export function AboutPage() {
                 Mission
               </p>
               <p className="mt-2 text-sm leading-7 text-white/85">
-                To provide reliable printer solutions, strong technical support,
-                and practical training that helps businesses and schools run
-                smoothly.
+                To deliver quality office technology solutions, practical
+                training, and dependable support that help organizations improve
+                productivity and reduce operating costs.
               </p>
             </div>
           </motion.div>
@@ -162,14 +162,14 @@ export function AboutPage() {
             Who we serve
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-            Schools, resellers, offices, and growing businesses
+            Organizations, businesses, institutions, and individuals
           </h2>
           <div className="mt-6 space-y-4">
             {[
-              "Schools that need printer support and technical training",
-              "Resellers who want a steady source of reliable printers",
-              "Offices that need quick repair and maintenance support",
-              "Customers looking for guidance on setup and troubleshooting",
+              "Organizations that need reliable office equipment and support",
+              "Businesses looking for maintenance and cost-effective service",
+              "Institutions that need toner refilling and practical training",
+              "Individuals who want consultation and setup guidance",
             ].map((item) => (
               <div
                 key={item}
@@ -190,12 +190,12 @@ export function AboutPage() {
                   Gallery
                 </p>
                 <h3 className="mt-2 font-heading text-2xl font-bold text-slate-900">
-                  A few moments from our workshop and support work
+                  A few moments from our service and support work
                 </h3>
               </div>
               <p className="max-w-md text-sm leading-7 text-slate-600">
-                A visual snapshot of the space where printers are checked,
-                repaired, prepared, and supported for customers and schools.
+                A visual snapshot of the space where equipment is prepared,
+                maintained, trained on, and supported for our clients.
               </p>
             </div>
 
@@ -221,7 +221,7 @@ export function AboutPage() {
                         Workshop {index + 1}
                       </p>
                       <p className="mt-1 text-sm font-medium text-white/92">
-                        Printer support and preparation
+                        Equipment support and preparation
                       </p>
                     </div>
                   </motion.div>
@@ -239,11 +239,12 @@ export function AboutPage() {
               Our promise
             </p>
             <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-              Experience, reliability, and support under one roof
+              Quality service, reliability, and support under one roof
             </h2>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-700">
-            <MapPinned className="h-4 w-4" /> Addis Ababa, Ethiopia
+            <MapPinned className="h-4 w-4" /> Betechemari Ymichemeru Kutroch,
+            Addis Ababa
           </div>
         </div>
       </section>

@@ -18,9 +18,10 @@ export function PublicFooter() {
             {companyName}
           </div>
           <p className="mt-4 max-w-lg text-sm leading-7 text-white/75">
-            A polished platform for printer imports, repair services, training,
-            and reseller operations with a clean experience across public and
-            dashboard pages.
+            Professional digital printing and office equipment solutions,
+            including importing, maintenance, toner refilling, training, and
+            consultation for organizations, businesses, institutions, and
+            individuals.
           </p>
         </div>
 
@@ -59,7 +60,7 @@ export function PublicFooter() {
             </div>
             <div className="flex items-start gap-3">
               <MapPinned className="mt-0.5 h-4 w-4 text-orange-300" />
-              <span>Near CBE Temenja Yaj branch, Addis Ababa</span>
+              <span>Betechemari Ymichemeru Kutroch, Addis Ababa</span>
             </div>
             <a
               href="https://www.tiktok.com/@dipcomtechnologies"
@@ -75,8 +76,11 @@ export function PublicFooter() {
 
       <div className="border-t border-white/10 px-4 py-5 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full flex-col gap-2 text-sm text-white/55 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 DIPCOM Technologies. All rights reserved.</p>
-          <p>Reliable printer solutions with a premium digital experience.</p>
+          <p>© 2026 {companyName}. All rights reserved.</p>
+          <p>
+            Reliable office technology solutions with a premium digital
+            experience.
+          </p>
         </div>
       </div>
     </footer>

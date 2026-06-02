@@ -9,7 +9,7 @@ import { contactPhone } from "../../utils/branding.ts";
 import { currency } from "../../utils/format.ts";
 
 export function ShopPage() {
-  const { categories, products } = useAppContext();
+  const { categories, products, siteSettings } = useAppContext();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [brand, setBrand] = useState("all");
@@ -74,11 +74,11 @@ export function ShopPage() {
               Shop
             </p>
             <h1 className="font-heading text-3xl font-bold text-slate-900">
-              Browse the product catalog
+              Browse office equipment and consumables
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              Search, filter, sort, and open any product to view order contact
-              details.
+              Search, filter, sort, and open any product to view order and
+              service contact details.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-700">
@@ -241,7 +241,7 @@ export function ShopPage() {
                       Address
                     </p>
                     <p className="font-semibold text-slate-900">
-                      145 Commerce Street, NY
+                      {siteSettings.contactAddress}
                     </p>
                   </div>
                 </div>

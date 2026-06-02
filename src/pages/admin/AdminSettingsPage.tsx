@@ -108,7 +108,7 @@ export function AdminSettingsPage() {
             Platform Settings
           </h2>
           <p className="mt-2 text-sm text-slate-500">
-            Control the default reseller discount used for new accounts.
+            Control the default trade discount used for new accounts.
           </p>
 
           <form className="mt-6 grid gap-4" onSubmit={onSubmit}>

@@ -71,7 +71,8 @@ export function LoginPage() {
                 <Sparkles className="h-4 w-4" /> Secure access
               </span>
               <h1 className="mt-5 max-w-xl font-heading text-4xl font-bold leading-tight sm:text-5xl">
-                Sign in to manage inventory, sales, and seller tools.
+                Sign in to manage equipment listings, services, and seller
+                tools.
               </h1>
               <p className="mt-4 max-w-lg text-sm leading-7 text-white/85 sm:text-base">
                 The dashboard is designed for admin and seller workflows with a

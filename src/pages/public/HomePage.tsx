@@ -15,59 +15,59 @@ import { companyLogo, companyName } from "../../utils/branding.ts";
 
 const services = [
   {
-    title: "Printer Imports",
+    title: "Digital Printing Solutions",
     icon: <Truck className="h-5 w-5" />,
-    text: "We import printers and accessories with careful sourcing, inventory planning, and quality checks before items hit the shelf.",
+    text: "We supply digital printing equipment and office technology with careful sourcing, quality checks, and practical product selection.",
   },
   {
-    title: "Printer Repair",
+    title: "Maintenance and Support",
     icon: <Wrench className="h-5 w-5" />,
-    text: "We repair printers, replace damaged parts, and help restore devices to dependable working condition for customers and resellers.",
+    text: "We maintain, repair, and support office equipment so organizations can keep daily operations running without unnecessary downtime.",
   },
   {
-    title: "Training & Setup",
+    title: "Training and Consultation",
     icon: <GraduationCap className="h-5 w-5" />,
-    text: "We give practical training on printer setup, maintenance, troubleshooting, and best practices for store and business teams.",
+    text: "We provide practical hands-on training, toner refilling guidance, setup support, and consultation for teams and individuals.",
   },
 ];
 
 const highlights = [
-  "Trusted reseller operations",
-  "Modern dashboard and shop experience",
-  "Service, repair, and training support",
-  "Inventory planning and stock visibility",
+  "18+ years of industry experience",
+  "Imported office equipment and consumables",
+  "Maintenance, training, and consultation",
+  "Fast customer support and response",
 ];
 
 const steps = [
   {
-    title: "Source and import",
-    text: "We select reliable printer models and accessories for the market, balancing quality, availability, and value.",
+    title: "Understand the need",
+    text: "We listen to the requirements of organizations, businesses, institutions, and individuals before recommending the right solution.",
   },
   {
-    title: "Inspect and repair",
-    text: "Devices are checked, repaired, and prepared for sale so customers get reliable equipment.",
+    title: "Deliver and maintain",
+    text: "We deliver reliable equipment, handle maintenance and toner support, and keep systems ready for daily use.",
   },
   {
     title: "Train and support",
-    text: "We guide teams and customers on usage, maintenance, and operational efficiency.",
+    text: "We provide practical training and consultation so teams can work efficiently and confidently.",
   },
 ];
 
 const testimonials = [
   {
     name: "Alemu T.",
-    role: "Retail Partner",
-    text: "The inventory flow is clean, the products are organized, and the team is quick with support and repairs.",
+    role: "Operations Lead",
+    text: "Their team delivered practical maintenance support and helped us keep our office equipment working with less downtime.",
   },
   {
     name: "Marta S.",
     role: "School Admin",
-    text: "Training was practical and easy to follow. Our staff learned printer setup and maintenance very quickly.",
+    text: "The training was clear, hands-on, and useful for our staff. We now handle setup and toner refilling with more confidence.",
   },
   {
     name: "Daniel K.",
     role: "Office Manager",
-    text: "Their service is professional and the printer repair work saved us time and money. Very dependable team.",
+    text: "Professional service, fast response, and reliable consultation. They helped us reduce costs and improve productivity.",
   },
 ];
 
@@ -195,10 +195,10 @@ export function HomePage() {
       <section className="mt-10 grid gap-6 lg:grid-cols-[0.95fr,1.05fr]">
         <article className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
-            Service process
+            How we work
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-            Clear steps from sourcing to support
+            Clear steps from consultation to ongoing support
           </h2>
           <div className="mt-6 space-y-5">
             {steps.map((step, index) => (
@@ -225,15 +225,15 @@ export function HomePage() {
               Why clients choose us
             </p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-slate-900">
-              More than a shop, a service partner
+              More than a supplier, a long-term service partner
             </h2>
           </div>
           <div className="grid gap-4 p-6 sm:p-8">
             {[
-              "Reliable printer imports and inventory planning",
-              "Fast repair and parts replacement workflow",
-              "Practical training for teams and end users",
-              "Clean dashboard experience for resellers",
+              "High-quality imported office equipment",
+              "Skilled maintenance and support services",
+              "Practical hands-on technical training",
+              "Long-term customer relationship approach",
             ].map((item) => (
               <div
                 key={item}
@@ -256,7 +256,7 @@ export function HomePage() {
               Testimonials
             </p>
             <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-              What customers say about DIPCOM Technologies
+              What customers say about DIPCOM Technology Solutions
             </h2>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-700">
@@ -305,7 +305,7 @@ export function HomePage() {
               Ready to explore
             </p>
             <h2 className="mt-2 font-heading text-3xl font-bold text-slate-900">
-              Visit the shop for products or contact us for services
+              Visit the shop for equipment or contact us for support
             </h2>
           </div>
           <Link
