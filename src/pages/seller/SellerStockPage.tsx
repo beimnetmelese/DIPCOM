@@ -1,5 +1,11 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
-import { AlertTriangle, ImagePlus, Plus, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  ImagePlus,
+  LoaderCircle,
+  Plus,
+  Search,
+} from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
@@ -62,6 +68,8 @@ export function SellerStockPage() {
   const [category, setCategory] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<SellerProduct | null>(null);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
 
   const categoryChoices = categories.filter((item) => item.id && item.name);
 
@@ -155,12 +163,17 @@ export function SellerStockPage() {
       category: selectedCategory.name,
     };
 
-    if (editing) {
-      await updateSellerProduct(editing.id, payload);
-    } else {
-      await addSellerProduct(payload);
+    setIsSavingProduct(true);
+    try {
+      if (editing) {
+        await updateSellerProduct(editing.id, payload);
+      } else {
+        await addSellerProduct(payload);
+      }
+      setOpen(false);
+    } finally {
+      setIsSavingProduct(false);
     }
-    setOpen(false);
   };
 
   return (
@@ -526,9 +539,16 @@ export function SellerStockPage() {
           </div>
           <button
             type="submit"
+            disabled={isSavingProduct}
             className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
           >
-            Save
+            {isSavingProduct ? (
+              <span className="inline-flex items-center gap-2">
+                <LoaderCircle className="h-4 w-4 animate-spin" /> Saving...
+              </span>
+            ) : (
+              "Save"
+            )}
           </button>
         </form>
       </Modal>
@@ -559,6 +579,7 @@ export function SellerStockPage() {
           <div className="flex flex-wrap justify-end gap-3">
             <button
               type="button"
+              disabled={Boolean(deleteLoadingId)}
               onClick={() => setDeleteTarget(null)}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
             >
@@ -566,15 +587,26 @@ export function SellerStockPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                if (deleteTarget) {
-                  deleteSellerProduct(deleteTarget.id);
+              disabled={Boolean(deleteLoadingId)}
+              onClick={async () => {
+                if (!deleteTarget) return;
+                setDeleteLoadingId(deleteTarget.id);
+                try {
+                  await deleteSellerProduct(deleteTarget.id);
+                  setDeleteTarget(null);
+                } finally {
+                  setDeleteLoadingId(null);
                 }
-                setDeleteTarget(null);
               }}
               className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
             >
-              Yes, delete
+              {deleteLoadingId === deleteTarget?.id ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" /> Deleting...
+                </span>
+              ) : (
+                "Yes, delete"
+              )}
             </button>
           </div>
         </div>

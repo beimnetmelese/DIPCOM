@@ -1,5 +1,12 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
-import { AlertTriangle, Download, ImagePlus, Search, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  ImagePlus,
+  LoaderCircle,
+  Plus,
+  Search,
+} from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
@@ -72,6 +79,9 @@ export function AdminProductsPage() {
   const [stockFilter, setStockFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [categoryName, setCategoryName] = useState("");
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
   const isReadOnly = currentUser?.role === "staff";
   const canManageCategories =
     currentUser?.role === "admin" || currentUser?.role === "staff";
@@ -169,12 +179,17 @@ export function AdminProductsPage() {
       category: selectedCategory.name,
     };
 
-    if (editing) {
-      await updateProduct(editing.id, payload);
-    } else {
-      await addProduct(payload);
+    setIsSavingProduct(true);
+    try {
+      if (editing) {
+        await updateProduct(editing.id, payload);
+      } else {
+        await addProduct(payload);
+      }
+      setOpen(false);
+    } finally {
+      setIsSavingProduct(false);
     }
-    setOpen(false);
   };
 
   const handleCategoryCreate = async () => {
@@ -183,8 +198,13 @@ export function AdminProductsPage() {
       return;
     }
 
-    await addCategory({ name: nextName });
-    setCategoryName("");
+    setIsCreatingCategory(true);
+    try {
+      await addCategory({ name: nextName });
+      setCategoryName("");
+    } finally {
+      setIsCreatingCategory(false);
+    }
   };
 
   const exportAsExcel = () => {
@@ -319,9 +339,17 @@ export function AdminProductsPage() {
               <button
                 type="button"
                 onClick={handleCategoryCreate}
+                disabled={isCreatingCategory}
                 className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
               >
-                Add Category
+                {isCreatingCategory ? (
+                  <span className="inline-flex items-center gap-2">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Adding...
+                  </span>
+                ) : (
+                  "Add Category"
+                )}
               </button>
             </div>
           </div>
@@ -652,9 +680,16 @@ export function AdminProductsPage() {
           </div>
           <button
             type="submit"
+            disabled={isSavingProduct}
             className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
           >
-            Save
+            {isSavingProduct ? (
+              <span className="inline-flex items-center gap-2">
+                <LoaderCircle className="h-4 w-4 animate-spin" /> Saving...
+              </span>
+            ) : (
+              "Save"
+            )}
           </button>
         </form>
       </Modal>
@@ -699,6 +734,7 @@ export function AdminProductsPage() {
           <div className="flex flex-wrap justify-end gap-3">
             <button
               type="button"
+              disabled={Boolean(deleteLoadingId)}
               onClick={() => setDeleteTarget(null)}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
             >
@@ -706,15 +742,26 @@ export function AdminProductsPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                if (deleteTarget) {
-                  deleteProduct(deleteTarget.id);
+              disabled={Boolean(deleteLoadingId)}
+              onClick={async () => {
+                if (!deleteTarget) return;
+                setDeleteLoadingId(deleteTarget.id);
+                try {
+                  await deleteProduct(deleteTarget.id);
+                  setDeleteTarget(null);
+                } finally {
+                  setDeleteLoadingId(null);
                 }
-                setDeleteTarget(null);
               }}
               className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white"
             >
-              Yes, delete
+              {deleteLoadingId === deleteTarget?.id ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" /> Deleting...
+                </span>
+              ) : (
+                "Yes, delete"
+              )}
             </button>
           </div>
         </div>

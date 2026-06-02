@@ -1,5 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BadgeCheck, ShieldAlert, ShieldUser, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  LoaderCircle,
+  ShieldAlert,
+  ShieldUser,
+  Trash2,
+} from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 
@@ -22,6 +28,9 @@ export function AdminSettingsPage() {
     password: "",
   });
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isSavingSetting, setIsSavingSetting] = useState(false);
+  const [isRegisteringAdmin, setIsRegisteringAdmin] = useState(false);
+  const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
 
   useEffect(() => {
     setValueInput(String(commissionPercent));
@@ -37,13 +46,23 @@ export function AdminSettingsPage() {
     event.preventDefault();
     const parsed = Number(valueInput || 0);
     const clamped = Math.min(50, Math.max(0, parsed));
-    await setCommissionPercent(clamped);
+    setIsSavingSetting(true);
+    try {
+      await setCommissionPercent(clamped);
+    } finally {
+      setIsSavingSetting(false);
+    }
   };
 
   const onAdminSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await registerAdmin(adminForm);
-    setAdminForm({ name: "", email: "", roleType: "staff", password: "" });
+    setIsRegisteringAdmin(true);
+    try {
+      await registerAdmin(adminForm);
+      setAdminForm({ name: "", email: "", roleType: "staff", password: "" });
+    } finally {
+      setIsRegisteringAdmin(false);
+    }
   };
 
   return (
@@ -129,9 +148,16 @@ export function AdminSettingsPage() {
             </label>
             <button
               type="submit"
+              disabled={isSavingSetting}
               className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Save Setting
+              {isSavingSetting ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" /> Saving...
+                </span>
+              ) : (
+                "Save Setting"
+              )}
             </button>
           </form>
         </section>
@@ -201,9 +227,17 @@ export function AdminSettingsPage() {
             />
             <button
               type="submit"
+              disabled={isRegisteringAdmin}
               className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
             >
-              Register Admin
+              {isRegisteringAdmin ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />{" "}
+                  Registering...
+                </span>
+              ) : (
+                "Register Admin"
+              )}
             </button>
           </form>
 
@@ -240,6 +274,7 @@ export function AdminSettingsPage() {
                       <div className="mt-3 flex items-center gap-2">
                         <button
                           type="button"
+                          disabled={deletingAdminId === admin.id}
                           onClick={() => setPendingDeleteId(null)}
                           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
                         >
@@ -247,13 +282,26 @@ export function AdminSettingsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            deleteAdminAccount(admin.id);
-                            setPendingDeleteId(null);
+                          disabled={deletingAdminId === admin.id}
+                          onClick={async () => {
+                            setDeletingAdminId(admin.id);
+                            try {
+                              await deleteAdminAccount(admin.id);
+                              setPendingDeleteId(null);
+                            } finally {
+                              setDeletingAdminId(null);
+                            }
                           }}
                           className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
                         >
-                          Yes, delete
+                          {deletingAdminId === admin.id ? (
+                            <span className="inline-flex items-center gap-2">
+                              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />{" "}
+                              Deleting...
+                            </span>
+                          ) : (
+                            "Yes, delete"
+                          )}
                         </button>
                       </div>
                     </div>

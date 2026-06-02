@@ -28,6 +28,7 @@ export function AdminReservationsPage() {
     action: "approve" | "reject" | "deliver";
   } | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [isConfirmingAction, setIsConfirmingAction] = useState(false);
 
   const activeReservations = useMemo(
     () =>
@@ -60,27 +61,30 @@ export function AdminReservationsPage() {
     (reservation) => reservation.status === "delivered",
   ).length;
 
-  const runAction = (
+  const runAction = async (
     reservationId: string,
     action: "approve" | "reject" | "deliver",
   ) => {
     if (action === "approve") {
-      approveReservation(reservationId);
-      return;
+      await approveReservation(reservationId);
+      return true;
     }
 
     if (action === "reject") {
       const note = rejectionReason.trim();
       if (!note) {
-        return;
+        return false;
       }
-      rejectReservation(reservationId, note);
-      return;
+      await rejectReservation(reservationId, note);
+      return true;
     }
 
     if (action === "deliver") {
-      confirmReservationDelivery(reservationId);
+      await confirmReservationDelivery(reservationId);
+      return true;
     }
+
+    return true;
   };
 
   return (
@@ -222,6 +226,7 @@ export function AdminReservationsPage() {
                   <>
                     <button
                       type="button"
+                      disabled={Boolean(confirmation) || isConfirmingAction}
                       onClick={() => {
                         setRejectionReason("");
                         setConfirmation({
@@ -235,6 +240,7 @@ export function AdminReservationsPage() {
                     </button>
                     <button
                       type="button"
+                      disabled={Boolean(confirmation) || isConfirmingAction}
                       onClick={() => {
                         setRejectionReason("");
                         setConfirmation({
@@ -252,6 +258,7 @@ export function AdminReservationsPage() {
                   <>
                     <button
                       type="button"
+                      disabled={Boolean(confirmation) || isConfirmingAction}
                       onClick={() => {
                         setRejectionReason("");
                         setConfirmation({
@@ -342,18 +349,29 @@ export function AdminReservationsPage() {
             <button
               type="button"
               onClick={() => setConfirmation(null)}
+              disabled={isConfirmingAction}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
             >
               Cancel
             </button>
             <button
               type="button"
-              onClick={() => {
-                if (confirmation) {
-                  runAction(confirmation.reservationId, confirmation.action);
+              disabled={isConfirmingAction}
+              onClick={async () => {
+                if (!confirmation) return;
+                setIsConfirmingAction(true);
+                try {
+                  const completed = await runAction(
+                    confirmation.reservationId,
+                    confirmation.action,
+                  );
+                  if (completed) {
+                    setConfirmation(null);
+                    setRejectionReason("");
+                  }
+                } finally {
+                  setIsConfirmingAction(false);
                 }
-                setConfirmation(null);
-                setRejectionReason("");
               }}
               className={`rounded-xl px-4 py-2 text-sm font-semibold text-white ${
                 confirmation?.action === "approve"
@@ -363,7 +381,13 @@ export function AdminReservationsPage() {
                     : "bg-emerald-600"
               }`}
             >
-              Yes, {confirmation?.action}
+              {isConfirmingAction ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" /> Working...
+                </span>
+              ) : (
+                <>Yes, {confirmation?.action}</>
+              )}
             </button>
           </div>
         </div>

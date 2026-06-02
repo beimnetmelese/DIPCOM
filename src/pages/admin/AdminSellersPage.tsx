@@ -36,6 +36,7 @@ export function AdminSellersPage() {
   } | null>(null);
   const [removalReason, setRemovalReason] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [isConfirmingAction, setIsConfirmingAction] = useState(false);
 
   const normalizeIntegerInput = (value: string) =>
     value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
@@ -98,26 +99,26 @@ export function AdminSellersPage() {
   const removedCount = removedSellers.length;
   const activeCount = activeSellers.length;
 
-  const runAction = (
+  const runAction = async (
     sellerId: string,
     action: "approve" | "reject" | "remove",
   ) => {
     if (action === "approve") {
-      approveSeller(sellerId);
+      await approveSeller(sellerId);
       return true;
     }
 
     if (action === "reject") {
       const note = rejectionReason.trim();
       if (!note) return false;
-      void rejectSeller(sellerId, note);
+      await rejectSeller(sellerId, note);
       return true;
     }
 
     if (action === "remove") {
       const note = removalReason.trim();
       if (!note) return false;
-      void removeSeller(sellerId, note);
+      await removeSeller(sellerId, note);
       return true;
     }
 
@@ -269,6 +270,7 @@ export function AdminSellersPage() {
                   <>
                     <button
                       type="button"
+                      disabled={Boolean(confirmation) || isConfirmingAction}
                       onClick={() =>
                         setConfirmation({
                           sellerId: seller.id,
@@ -281,6 +283,7 @@ export function AdminSellersPage() {
                     </button>
                     <button
                       type="button"
+                      disabled={Boolean(confirmation) || isConfirmingAction}
                       onClick={() =>
                         setConfirmation({
                           sellerId: seller.id,
@@ -295,6 +298,7 @@ export function AdminSellersPage() {
                 ) : (
                   <button
                     type="button"
+                    disabled={Boolean(confirmation) || isConfirmingAction}
                     onClick={() => {
                       setRemovalReason("");
                       setConfirmation({
@@ -347,7 +351,14 @@ export function AdminSellersPage() {
                   disabled={savingSellerId === seller.id}
                   className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingSellerId === seller.id ? "Saving..." : "Save discount"}
+                  {savingSellerId === seller.id ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />{" "}
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save discount"
+                  )}
                 </button>
               </div>
 
@@ -396,26 +407,41 @@ export function AdminSellersPage() {
                     <button
                       type="button"
                       onClick={() => setConfirmation(null)}
+                      disabled={isConfirmingAction}
                       className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        const completed = runAction(
-                          seller.id,
-                          confirmation.action,
-                        );
-                        if (completed) {
-                          setConfirmation(null);
-                          setRemovalReason("");
-                          setRejectionReason("");
+                      disabled={isConfirmingAction}
+                      onClick={async () => {
+                        if (!confirmation) return;
+                        setIsConfirmingAction(true);
+                        try {
+                          const completed = await runAction(
+                            seller.id,
+                            confirmation.action,
+                          );
+                          if (completed) {
+                            setConfirmation(null);
+                            setRemovalReason("");
+                            setRejectionReason("");
+                          }
+                        } finally {
+                          setIsConfirmingAction(false);
                         }
                       }}
                       className={`rounded-xl px-3 py-2 text-xs font-semibold text-white ${confirmation.action === "approve" ? "bg-emerald-600" : confirmation.action === "reject" ? "bg-rose-600" : "bg-slate-900"}`}
                     >
-                      Yes, {confirmation.action}
+                      {isConfirmingAction ? (
+                        <span className="inline-flex items-center gap-2">
+                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          Working...
+                        </span>
+                      ) : (
+                        <>Yes, {confirmation.action}</>
+                      )}
                     </button>
                   </div>
                 </div>
