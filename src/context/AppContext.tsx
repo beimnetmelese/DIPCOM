@@ -61,6 +61,17 @@ interface AdminRegisterPayload {
   password: string;
 }
 
+interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+interface ResetSellerPasswordPayload {
+  newPassword: string;
+  confirmPassword: string;
+}
+
 interface CategoryPayload {
   name: string;
 }
@@ -96,6 +107,13 @@ interface AppContextValue {
   resubmitRejectedSeller: (
     payload: ResubmitRejectedSellerPayload,
   ) => Promise<LoginResult>;
+  changePassword: (
+    payload: ChangePasswordPayload,
+  ) => Promise<{ ok: boolean; message: string }>;
+  resetSellerPassword: (
+    sellerId: string,
+    payload: ResetSellerPasswordPayload,
+  ) => Promise<{ ok: boolean; message: string }>;
   registerAdmin: (payload: AdminRegisterPayload) => Promise<void>;
   deleteAdminAccount: (adminId: string) => Promise<void>;
   approveSeller: (sellerId: string) => Promise<void>;
@@ -970,6 +988,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pushToast("Signed out", "Session closed securely.", "info");
   };
 
+  const changePassword = async ({
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  }: ChangePasswordPayload) => {
+    try {
+      await apiRequest("/accounts/change-password/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      });
+      pushToast(
+        "Password updated",
+        "Your password has been changed successfully.",
+        "success",
+      );
+      return { ok: true, message: "Password updated successfully." };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to change password.";
+      pushToast("Action failed", message, "warning");
+      return { ok: false, message };
+    }
+  };
+
+  const resetSellerPassword = async (
+    sellerId: string,
+    { newPassword, confirmPassword }: ResetSellerPasswordPayload,
+  ) => {
+    try {
+      await apiRequest(`/accounts/sellers/${sellerId}/reset-password/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newPassword,
+          confirmPassword,
+        }),
+      });
+      pushToast(
+        "Seller password reset",
+        "The seller password has been updated successfully.",
+        "success",
+      );
+      return { ok: true, message: "Seller password reset successfully." };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to reset seller password.";
+      pushToast("Action failed", message, "warning");
+      return { ok: false, message };
+    }
+  };
+
   const registerSeller = async ({
     name,
     email,
@@ -1480,6 +1556,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unreadNotificationCount,
       login,
       logout,
+      changePassword,
+      resetSellerPassword,
       registerSeller,
       resubmitRejectedSeller,
       registerAdmin,

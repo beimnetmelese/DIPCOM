@@ -3,6 +3,8 @@ import {
   BadgeCheck,
   CheckCircle2,
   Clock3,
+  Eye,
+  EyeOff,
   LoaderCircle,
   MapPin,
   RefreshCw,
@@ -23,6 +25,7 @@ export function AdminSellersPage() {
     removeSeller,
     reactivateSeller,
     updateSellerDiscount,
+    resetSellerPassword,
   } = useAppContext();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -34,6 +37,19 @@ export function AdminSellersPage() {
     sellerId: string;
     action: "approve" | "reject" | "remove";
   } | null>(null);
+  const [passwordModal, setPasswordModal] = useState<{
+    sellerId: string;
+    businessName: string;
+  } | null>(null);
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = useState({
+    new: false,
+    confirm: false,
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [removalReason, setRemovalReason] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [isConfirmingAction, setIsConfirmingAction] = useState(false);
@@ -135,6 +151,30 @@ export function AdminSellersPage() {
       await updateSellerDiscount(sellerId, clamped);
     } finally {
       setSavingSellerId(null);
+    }
+  };
+
+  const submitPasswordReset = async () => {
+    if (!passwordModal) {
+      return;
+    }
+
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const result = await resetSellerPassword(passwordModal.sellerId, {
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      });
+      if (result.ok) {
+        setPasswordModal(null);
+        setPasswordForm({ newPassword: "", confirmPassword: "" });
+      }
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -266,6 +306,18 @@ export function AdminSellersPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPasswordModal({
+                      sellerId: seller.id,
+                      businessName: seller.businessName,
+                    })
+                  }
+                  className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                >
+                  Reset password
+                </button>
                 {seller.status === "pending" ? (
                   <>
                     <button
@@ -361,6 +413,99 @@ export function AdminSellersPage() {
                   )}
                 </button>
               </div>
+
+              {passwordModal?.sellerId === seller.id ? (
+                <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      Reset password for {passwordModal.businessName}
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        New password
+                        <div className="relative mt-1">
+                          <input
+                            type={showPassword.new ? "text" : "password"}
+                            value={passwordForm.newPassword}
+                            onChange={(event) =>
+                              setPasswordForm((prev) => ({
+                                ...prev,
+                                newPassword: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 text-sm outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPassword((prev) => ({
+                                ...prev,
+                                new: !prev.new,
+                              }))
+                            }
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500"
+                          >
+                            {showPassword.new ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </label>
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Confirm password
+                        <div className="relative mt-1">
+                          <input
+                            type={showPassword.confirm ? "text" : "password"}
+                            value={passwordForm.confirmPassword}
+                            onChange={(event) =>
+                              setPasswordForm((prev) => ({
+                                ...prev,
+                                confirmPassword: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pr-10 text-sm outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPassword((prev) => ({
+                                ...prev,
+                                confirm: !prev.confirm,
+                              }))
+                            }
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500"
+                          >
+                            {showPassword.confirm ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPasswordModal(null)}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={passwordSaving}
+                      onClick={() => void submitPasswordReset()}
+                      className="rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      {passwordSaving ? "Saving..." : "Save password"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {confirmation?.sellerId === seller.id ? (
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
