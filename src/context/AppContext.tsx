@@ -788,6 +788,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pushToast(notification.title, notification.message, "info");
   };
 
+  const sendWelcomeNotification = () => {
+    displayIncomingNotification({
+      id: "welcome",
+      title: "Welcome back",
+      message: "You are signed in and can now receive live alerts.",
+      kind: "session_welcome",
+      isRead: true,
+      createdAt: new Date().toISOString(),
+    });
+  };
+
   const refreshNotifications = async () => {
     if (!currentUser) {
       setUnreadNotificationCount(0);
@@ -903,6 +914,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await enableBrowserNotifications();
       } else {
         await registerBrowserPushSubscription(false);
+      }
+
+      if (Notification.permission === "granted") {
+        sendWelcomeNotification();
       }
 
       await refreshNotifications();

@@ -82,7 +82,7 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
               </h1>
             </div>
             <div className="relative flex flex-wrap items-center gap-2">
-              {notificationPermission !== "granted" && (
+              {notificationPermission !== "granted" && false ? (
                 <button
                   type="button"
                   onClick={() => void enableBrowserNotifications()}
@@ -91,7 +91,7 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
                   <Bell className="h-4 w-4" />
                   Enable alerts
                 </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 onClick={() => setNotificationsOpen((prev) => !prev)}

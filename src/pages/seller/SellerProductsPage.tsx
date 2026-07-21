@@ -13,8 +13,8 @@ const initialFilters: ProductFilters = {
   query: "",
   category: "all",
   brand: "all",
-  minPrice: 0,
-  maxPrice: 99999999,
+  minPrice: null,
+  maxPrice: null,
   availability: "all",
   sortBy: "newest",
 };
@@ -38,8 +38,8 @@ export function SellerProductsPage() {
   const [filters, setFilters] = useState<ProductFilters>(initialFilters);
   const [reserveTarget, setReserveTarget] = useState<Product | null>(null);
   const [reserveQuantityInput, setReserveQuantityInput] = useState("1");
-  const [minPriceInput, setMinPriceInput] = useState("0");
-  const [maxPriceInput, setMaxPriceInput] = useState("99999999");
+  const [minPriceInput, setMinPriceInput] = useState("");
+  const [maxPriceInput, setMaxPriceInput] = useState("");
   const [reserveError, setReserveError] = useState("");
   const [isReserving, setIsReserving] = useState(false);
   const [deliveryNotice, setDeliveryNotice] = useState<{
@@ -82,8 +82,10 @@ export function SellerProductsPage() {
         filters.category === "all" || product.categoryId === filters.category;
       const matchBrand =
         filters.brand === "all" || product.brand === filters.brand;
-      const matchPrice =
-        product.price >= filters.minPrice && product.price <= filters.maxPrice;
+      const matchMinPrice =
+        filters.minPrice === null || product.price >= filters.minPrice;
+      const matchMaxPrice =
+        filters.maxPrice === null || product.price <= filters.maxPrice;
 
       const matchAvailability =
         filters.availability === "all" ||
@@ -97,7 +99,8 @@ export function SellerProductsPage() {
         matchQuery &&
         matchCategory &&
         matchBrand &&
-        matchPrice &&
+        matchMinPrice &&
+        matchMaxPrice &&
         matchAvailability
       );
     });
@@ -270,11 +273,11 @@ export function SellerProductsPage() {
               setMinPriceInput(next);
               setFilters((prev) => ({
                 ...prev,
-                minPrice: Number(next || 0),
+                minPrice: next ? Number(next) : null,
               }));
             }}
             className="rounded-2xl border border-orange-200 px-3 py-3 text-sm outline-none"
-            placeholder="Min price"
+            placeholder="Min price (optional)"
           />
           <input
             type="text"
@@ -285,11 +288,11 @@ export function SellerProductsPage() {
               setMaxPriceInput(next);
               setFilters((prev) => ({
                 ...prev,
-                maxPrice: Number(next || 0),
+                maxPrice: next ? Number(next) : null,
               }));
             }}
             className="rounded-2xl border border-orange-200 px-3 py-3 text-sm outline-none"
-            placeholder="Max price"
+            placeholder="Max price (optional)"
           />
           <select
             value={filters.availability}

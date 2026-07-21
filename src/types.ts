@@ -123,8 +123,8 @@ export interface ProductFilters {
   query: string
   category: string
   brand: string
-  minPrice: number
-  maxPrice: number
+  minPrice: number | null
+  maxPrice: number | null
   availability: 'all' | 'in-stock' | 'low-stock' | 'out-of-stock'
   sortBy: 'newest' | 'price-asc' | 'price-desc'
 }

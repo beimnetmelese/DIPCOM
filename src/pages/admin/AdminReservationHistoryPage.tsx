@@ -21,6 +21,19 @@ const timeRanges = [
   { key: "custom", label: "Custom" },
 ] as const;
 
+const formatStatusLabel = (value: string) =>
+  value === "all"
+    ? "All"
+    : value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const summaryStatusOrder = [
+  "all",
+  "pending",
+  "approved",
+  "rejected",
+  "delivered",
+] as const;
+
 function isDateInRange(
   dateString: string,
   range: (typeof timeRanges)[number]["key"],
@@ -92,9 +105,21 @@ export function AdminReservationHistoryPage() {
   const [historyToDate, setHistoryToDate] = useState("");
   const [summaryFromDate, setSummaryFromDate] = useState("");
   const [summaryToDate, setSummaryToDate] = useState("");
+  const [summaryStatusFilter, setSummaryStatusFilter] = useState("all");
+
+  const summaryStatusOptions = useMemo(() => {
+    const statuses = new Set(reservations.map((reservation) => reservation.status));
+    const orderedStatuses = [...summaryStatusOrder];
+    const otherStatuses = Array.from(statuses).filter(
+      (status) => !summaryStatusOrder.includes(status as (typeof summaryStatusOrder)[number]),
+    );
+
+    return [...orderedStatuses, ...otherStatuses];
+  }, [reservations]);
 
   const summaryTimeRangeLabel =
     timeRanges.find((item) => item.key === summaryTimeRange)?.label ?? "Month";
+  const summaryStatusLabel = formatStatusLabel(summaryStatusFilter);
 
   const filteredHistory = useMemo(() => {
     return reservations
@@ -140,10 +165,10 @@ export function AdminReservationHistoryPage() {
   const summaryHistory = useMemo(
     () =>
       reservations
-        .filter(
-          (reservation) =>
-            reservation.status === "rejected" ||
-            reservation.status === "delivered",
+        .filter((reservation) =>
+          summaryStatusFilter === "all"
+            ? true
+            : reservation.status === summaryStatusFilter,
         )
         .filter((reservation) => {
           const referenceDate =
@@ -157,7 +182,13 @@ export function AdminReservationHistoryPage() {
             summaryToDate,
           );
         }),
-    [reservations, summaryFromDate, summaryTimeRange, summaryToDate],
+    [
+      reservations,
+      summaryFromDate,
+      summaryStatusFilter,
+      summaryTimeRange,
+      summaryToDate,
+    ],
   );
 
   const deliveredCount = reservations.filter(
@@ -217,10 +248,11 @@ export function AdminReservationHistoryPage() {
               <Archive className="h-4 w-4" /> Reservation history
             </p>
             <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Delivered and rejected reservations in one clean history view.
+              Reservation history and seller summary in one clean view.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-              Track completed and rejected workflow outcomes.
+              Track reservation outcomes, status-based totals, and seller value
+              across any time range.
             </p>
           </div>
         </div>
@@ -439,11 +471,12 @@ export function AdminReservationHistoryPage() {
               Seller summary for {summaryTimeRangeLabel}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              See which sellers reserved the most items in the selected period.
+              See which sellers matched the selected period and reservation
+              status.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-            <BarChart3 className="h-4 w-4" /> {totalUnits} units /{" "}
+            <BarChart3 className="h-4 w-4" /> {summaryStatusLabel} status • {totalUnits} units /{" "}
             {currency(totalValue)}
           </div>
         </div>
@@ -461,6 +494,23 @@ export function AdminReservationHistoryPage() {
               }`}
             >
               {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {summaryStatusOptions.map((item) => (
+            <button
+              key={`status-${item}`}
+              type="button"
+              onClick={() => setSummaryStatusFilter(item)}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                summaryStatusFilter === item
+                  ? "bg-slate-950 text-white"
+                  : "bg-orange-50 text-slate-700 hover:bg-orange-100"
+              }`}
+            >
+              {formatStatusLabel(item)}
             </button>
           ))}
         </div>
