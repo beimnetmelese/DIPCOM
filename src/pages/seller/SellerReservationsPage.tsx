@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -8,23 +8,23 @@ import {
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { useAppContext } from "../../context/AppContext.tsx";
+import { ApiReservation, mapReservation } from "../../context/AppContext.tsx";
+import { useInfiniteApiList } from "../../hooks/useInfiniteApiList.ts";
+import type { Reservation } from "../../types.ts";
 import { currency, readableDate } from "../../utils/format.ts";
 
 export function SellerReservationsPage() {
-  const { currentUser, reservations } = useAppContext();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending" | "approved" | "rejected" | "delivered"
   >("all");
 
-  const myReservations = useMemo(
-    () =>
-      reservations.filter(
-        (reservation) => reservation.sellerId === currentUser?.id,
-      ),
-    [currentUser?.id, reservations],
+  const reservationList = useInfiniteApiList<ApiReservation, Reservation>(
+    "/reservations/reservations/",
+    { q: query, status: statusFilter === "all" ? undefined : statusFilter },
+    mapReservation,
   );
+  const myReservations = reservationList.items;
 
   const pendingCount = myReservations.filter(
     (reservation) => reservation.status === "pending",
@@ -39,23 +39,7 @@ export function SellerReservationsPage() {
     (reservation) => reservation.status === "delivered",
   ).length;
 
-  const filteredReservations = useMemo(
-    () =>
-      myReservations
-        .filter((reservation) => {
-          const searchable =
-            `${reservation.productName} ${reservation.sellerName}`.toLowerCase();
-          const matchesQuery = searchable.includes(query.toLowerCase());
-          const matchesStatus =
-            statusFilter === "all" || reservation.status === statusFilter;
-          return matchesQuery && matchesStatus;
-        })
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
-    [myReservations, query, statusFilter],
-  );
+  const filteredReservations = myReservations;
 
   return (
     <AnimatedPage>
@@ -269,6 +253,9 @@ export function SellerReservationsPage() {
               No reservations yet.
             </p>
           ) : null}
+        </div>
+        <div ref={reservationList.sentinelRef} className="py-5 text-center text-sm text-slate-500">
+          {reservationList.isLoading ? "Loading reservations..." : reservationList.hasMore ? "Scroll to load more reservations" : filteredReservations.length ? "All matching reservations loaded" : null}
         </div>
       </section>
     </AnimatedPage>

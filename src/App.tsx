@@ -6,6 +6,7 @@ import { ToastContainer } from "./components/ToastContainer.tsx";
 import { useAppContext } from "./context/AppContext.tsx";
 import { AdminOverviewPage } from "./pages/admin/AdminOverviewPage.tsx";
 import { AdminProductsPage } from "./pages/admin/AdminProductsPage.tsx";
+import { AdminSellerPostsPage } from "./pages/admin/AdminSellerPostsPage.tsx";
 import { AdminReservationsPage } from "./pages/admin/AdminReservationsPage.tsx";
 import { AdminReservationHistoryPage } from "./pages/admin/AdminReservationHistoryPage.tsx";
 import { AdminSellersPage } from "./pages/admin/AdminSellersPage.tsx";
@@ -21,7 +22,7 @@ import { ShopPage } from "./pages/public/ShopPage.tsx";
 import { SellerOverviewPage } from "./pages/seller/SellerOverviewPage.tsx";
 import { SellerProductsPage } from "./pages/seller/SellerProductsPage.tsx";
 import { SellerReservationsPage } from "./pages/seller/SellerReservationsPage.tsx";
-import { SellerStockPage } from "./pages/seller/SellerStockPage.tsx";
+import { SellerPostsPage } from "./pages/seller/SellerPostsPage.tsx";
 
 function ProtectedRoute({
   allowedRoles,
@@ -113,6 +114,7 @@ function App() {
         >
           <Route index element={<AdminOverviewPage />} />
           <Route path="products" element={<AdminProductsPage />} />
+          <Route path="posts" element={<AdminSellerPostsPage />} />
           <Route path="sellers" element={<AdminSellersPage />} />
           <Route path="reservations" element={<AdminReservationsPage />} />
           <Route path="history" element={<AdminReservationHistoryPage />} />
@@ -131,7 +133,8 @@ function App() {
           <Route index element={<SellerOverviewPage />} />
           <Route path="products" element={<SellerProductsPage />} />
           <Route path="reservations" element={<SellerReservationsPage />} />
-          <Route path="stock" element={<SellerStockPage />} />
+          <Route path="posts" element={<SellerPostsPage />} />
+          <Route path="stock" element={<Navigate to="posts" replace />} />
         </Route>
 
         <Route
@@ -142,7 +145,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="products" replace />} />
+          <Route index element={<Navigate to="posts" replace />} />
+          <Route path="posts" element={<AdminSellerPostsPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="reservations" element={<AdminReservationsPage />} />
         </Route>

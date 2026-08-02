@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   BadgeCheck,
   CheckCircle2,
@@ -14,12 +14,12 @@ import {
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { useAppContext } from "../../context/AppContext.tsx";
-import type { SellerStatus } from "../../types.ts";
+import { ApiSeller, mapSeller, useAppContext } from "../../context/AppContext.tsx";
+import { useInfiniteApiList } from "../../hooks/useInfiniteApiList.ts";
+import type { Seller } from "../../types.ts";
 
 export function AdminSellersPage() {
   const {
-    sellers,
     approveSeller,
     rejectSeller,
     removeSeller,
@@ -57,51 +57,10 @@ export function AdminSellersPage() {
   const normalizeIntegerInput = (value: string) =>
     value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
 
-  useEffect(() => {
-    setDiscountInputs(
-      Object.fromEntries(
-        sellers.map((seller) => [
-          seller.id,
-          String(seller.sellerDiscountPercent ?? 0),
-        ]),
-      ),
-    );
-  }, [sellers]);
-
-  const activeSellers = useMemo(() => {
-    return [...sellers]
-      .filter((seller) => !seller.removed)
-      .filter((seller) => {
-        const searchable =
-          `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber} ${seller.location ?? ""} ${seller.tinNumber ?? ""}`.toLowerCase();
-        return searchable.includes(query.toLowerCase());
-      })
-      .filter(
-        (seller) => statusFilter === "all" || seller.status === statusFilter,
-      )
-      .sort((a, b) => {
-        const order: Record<SellerStatus, number> = {
-          pending: 0,
-          approved: 1,
-          rejected: 2,
-          removed: 3,
-        };
-        const statusDiff = order[a.status] - order[b.status];
-        if (statusDiff !== 0) return statusDiff;
-        return a.businessName.localeCompare(b.businessName);
-      });
-  }, [query, sellers, statusFilter]);
-
-  const removedSellers = useMemo(() => {
-    return [...sellers]
-      .filter((seller) => seller.removed)
-      .filter((seller) => {
-        const searchable =
-          `${seller.name} ${seller.businessName} ${seller.email} ${seller.phoneNumber} ${seller.location ?? ""} ${seller.tinNumber ?? ""} ${seller.removalReason ?? ""}`.toLowerCase();
-        return searchable.includes(query.toLowerCase());
-      })
-      .sort((a, b) => a.businessName.localeCompare(b.businessName));
-  }, [query, sellers]);
+  const activeList = useInfiniteApiList<ApiSeller, Seller>("/accounts/sellers/", { q: query, status: statusFilter === "all" ? undefined : statusFilter, removed: "false" }, mapSeller);
+  const removedList = useInfiniteApiList<ApiSeller, Seller>("/accounts/sellers/", { q: query, removed: "true" }, mapSeller);
+  const activeSellers = activeList.items;
+  const removedSellers = removedList.items;
 
   const pendingCount = activeSellers.filter(
     (seller) => seller.status === "pending",
@@ -121,6 +80,7 @@ export function AdminSellersPage() {
   ) => {
     if (action === "approve") {
       await approveSeller(sellerId);
+      await activeList.refresh(); await removedList.refresh();
       return true;
     }
 
@@ -128,6 +88,7 @@ export function AdminSellersPage() {
       const note = rejectionReason.trim();
       if (!note) return false;
       await rejectSeller(sellerId, note);
+      await activeList.refresh(); await removedList.refresh();
       return true;
     }
 
@@ -135,6 +96,7 @@ export function AdminSellersPage() {
       const note = removalReason.trim();
       if (!note) return false;
       await removeSeller(sellerId, note);
+      await activeList.refresh(); await removedList.refresh();
       return true;
     }
 
@@ -149,6 +111,7 @@ export function AdminSellersPage() {
     setSavingSellerId(sellerId);
     try {
       await updateSellerDiscount(sellerId, clamped);
+      await activeList.refresh();
     } finally {
       setSavingSellerId(null);
     }
@@ -243,7 +206,7 @@ export function AdminSellersPage() {
             </p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-            <Users className="h-4 w-4" /> {sellers.length} accounts
+            <Users className="h-4 w-4" /> {activeSellers.length + removedSellers.length} loaded
           </span>
         </div>
 
@@ -594,6 +557,9 @@ export function AdminSellersPage() {
             </article>
           ))}
         </div>
+        <div ref={activeList.sentinelRef} className="py-5 text-center text-sm text-slate-500">
+          {activeList.isLoading ? "Loading sellers..." : activeList.hasMore ? "Scroll to load more sellers" : activeSellers.length ? "All matching sellers loaded" : "No sellers match the current filters."}
+        </div>
       </section>
 
       <section className="mt-6 rounded-3xl border border-rose-100 bg-white p-5 shadow-soft sm:p-6">
@@ -656,7 +622,7 @@ export function AdminSellersPage() {
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => void reactivateSeller(seller.id)}
+                    onClick={async () => { await reactivateSeller(seller.id); await activeList.refresh(); await removedList.refresh(); }}
                     className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
                   >
                     <RefreshCw className="h-4 w-4" /> Reactivate seller
@@ -669,6 +635,9 @@ export function AdminSellersPage() {
               No removed sellers yet.
             </div>
           )}
+        </div>
+        <div ref={removedList.sentinelRef} className="py-5 text-center text-sm text-slate-500">
+          {removedList.isLoading ? "Loading removed sellers..." : removedList.hasMore ? "Scroll to load more removed sellers" : removedSellers.length ? "All removed sellers loaded" : null}
         </div>
       </section>
     </AnimatedPage>

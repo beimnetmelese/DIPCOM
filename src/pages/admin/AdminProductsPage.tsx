@@ -21,6 +21,7 @@ const emptyForm = {
   categoryId: "",
   imageFile: null as File | null,
   condition: "new",
+  hotDeal: false,
 };
 
 const normalizeIntegerInput = (value: string) =>
@@ -132,6 +133,7 @@ export function AdminProductsPage() {
       brand: product.brand,
       categoryId: product.categoryId,
       condition: (product as any).condition ?? "new",
+      hotDeal: Boolean(product.hotDeal),
       imageFile: null,
     });
     setImagePreview(product.imageUrl ?? "");
@@ -174,6 +176,7 @@ export function AdminProductsPage() {
       stock: parsedStock,
       brand: form.brand,
       condition: (form as any).condition ?? "new",
+      hotDeal: Boolean(form.hotDeal),
       categoryId: form.categoryId,
       imageFile: form.imageFile,
       category: selectedCategory.name,
@@ -445,6 +448,11 @@ export function AdminProductsPage() {
                 <p className="font-semibold text-slate-900">{product.stock}</p>
               </div>
             </div>
+            {product.hotDeal ? (
+              <p className="mt-3 inline-flex rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                Hot Deal
+              </p>
+            ) : null}
             {!isReadOnly ? (
               <div className="mt-3 flex gap-2">
                 <button
@@ -476,6 +484,7 @@ export function AdminProductsPage() {
               <th className="px-4 py-3">Brand</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Condition</th>
+              <th className="px-4 py-3">Hot Deal</th>
               <th className="px-4 py-3">Price</th>
               <th className="px-4 py-3">Stock</th>
               {!isReadOnly ? <th className="px-4 py-3">Actions</th> : null}
@@ -518,6 +527,13 @@ export function AdminProductsPage() {
                     className={`rounded-full px-2 py-1 text-xs font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
                   >
                     {conditionLabel(product.condition)}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-semibold ${product.hotDeal ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {product.hotDeal ? "Hot Deal" : "Regular"}
                   </span>
                 </td>
                 <td className="px-4 py-3">{currency(product.price)}</td>
@@ -609,6 +625,20 @@ export function AdminProductsPage() {
                 <option value="new">Brand New</option>
                 <option value="used">Used</option>
               </select>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-orange-200 px-3 py-2 text-sm font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={Boolean(form.hotDeal)}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    hotDeal: event.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-orange-300 text-orange-500"
+              />
+              Hot Deal
             </label>
           </div>
           <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/40 p-4">

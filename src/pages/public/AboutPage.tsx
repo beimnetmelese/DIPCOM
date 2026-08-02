@@ -8,7 +8,7 @@ const pillars = [
   {
     title: "Importing",
     icon: <Truck className="h-5 w-5" />,
-    text: "Reliable importing services for digital printing and office equipment solutions.",
+    text: "Reliable Distributing services for digital printing Machine (Plotter, Duplicator, Copier, Printer and Scanner) and office Machine equipment solutions.",
   },
   {
     title: "Maintenance",
@@ -18,7 +18,7 @@ const pillars = [
   {
     title: "Training",
     icon: <Sparkles className="h-5 w-5" />,
-    text: "Hands-on technical training, toner refilling, and professional consultation under one trusted brand.",
+    text: "Hands-on technical training and professional consultation under one trusted brand.",
   },
 ];
 
@@ -63,7 +63,14 @@ export function AboutPage() {
               {siteSettings.aboutTitle}
             </h1>
             <p className="mt-5 max-w-2xl whitespace-pre-line text-base leading-8 text-white/88 sm:text-lg">
-              {siteSettings.aboutDescription}
+             DIPCOM Technology Solutions is a professional technology company specializing in office equipment Machinery solutions. With more than 18+ years of industry experience, the company provides reliable importing, , Office Machineries,maintenance, training, Rental (Printer, Scanner, Copier),  and consultation services for organizations, businesses, institutions, and individuals.
+             <br /> <br />
+
+The company was established with the goal of delivering high-quality office technology solutions while helping organizations improve productivity, reduce operational costs, and maintain efficient workflows.
+<br /> <br />
+DIPCOM combines technical expertise, modern equipment knowledge, professional customer handling, and practical industry experience to provide complete office equipment solutions under one trusted brand.
+<br /> <br />
+Our commitment to quality service, customer satisfaction, innovation, and professional support has allowed us to become a trusted partner for many organizations
             </p>
           </div>
 

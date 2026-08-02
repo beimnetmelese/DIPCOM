@@ -1,5 +1,6 @@
 export type SellerStatus = 'approved' | 'pending' | 'rejected' | 'removed'
 export type UserRole = 'admin' | 'seller' | 'staff'
+export type SellerProductModerationStatus = 'pending' | 'approved' | 'rejected'
 
 export interface Category {
   id: string
@@ -18,11 +19,20 @@ export interface Product {
   categoryId: string
   imageUrl?: string
   condition?: 'new' | 'used'
+  hotDeal?: boolean
   createdAt: string
 }
 
 export interface SellerProduct extends Product {
   sellerId: string
+  sellerName?: string
+  sellerBusinessName?: string
+  sellerPhoneNumber?: string
+  moderationStatus: SellerProductModerationStatus
+  moderationNote?: string
+  moderatedByName?: string
+  moderatedAt?: string
+  isAvailable: boolean
 }
 
 export interface ProductUpsertPayload {
@@ -34,6 +44,7 @@ export interface ProductUpsertPayload {
   categoryId: string
   imageFile?: File | null
   condition?: 'new' | 'used'
+  hotDeal?: boolean
 }
 
 export interface SellerProductUpsertPayload extends ProductUpsertPayload {

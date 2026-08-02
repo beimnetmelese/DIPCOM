@@ -6,9 +6,10 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  contentClassName?: string;
 }
 
-export function Modal({ open, title, onClose, children }: ModalProps) {
+export function Modal({ open, title, onClose, children, contentClassName = "" }: ModalProps) {
   return (
     <AnimatePresence>
       {open ? (
@@ -24,7 +25,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.24 }}
-            className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-4 shadow-soft sm:max-h-[calc(100vh-4rem)] sm:p-6"
+            className={`max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-4 shadow-soft sm:max-h-[calc(100vh-4rem)] sm:p-6 ${contentClassName}`}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">

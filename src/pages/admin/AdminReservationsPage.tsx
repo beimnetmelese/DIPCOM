@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -11,7 +11,9 @@ import {
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { useAppContext } from "../../context/AppContext.tsx";
+import { ApiReservation, mapReservation, useAppContext } from "../../context/AppContext.tsx";
+import { useInfiniteApiList } from "../../hooks/useInfiniteApiList.ts";
+import type { Reservation } from "../../types.ts";
 import { currency, readableDate } from "../../utils/format.ts";
 
 export function AdminReservationsPage() {
@@ -30,26 +32,12 @@ export function AdminReservationsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isConfirmingAction, setIsConfirmingAction] = useState(false);
 
-  const activeReservations = useMemo(
-    () =>
-      reservations
-        .filter((reservation) =>
-          statusFilter === "all"
-            ? reservation.status === "pending" ||
-              reservation.status === "approved"
-            : reservation.status === statusFilter,
-        )
-        .filter((reservation) => {
-          const searchable =
-            `${reservation.sellerName} ${reservation.productName} ${reservation.quantity} ${reservation.status}`.toLowerCase();
-          return searchable.includes(query.toLowerCase());
-        })
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
-    [query, reservations, statusFilter],
+  const activeList = useInfiniteApiList<ApiReservation, Reservation>(
+    "/reservations/reservations/",
+    { q: query, scope: statusFilter === "all" ? "active" : undefined, status: statusFilter === "all" ? undefined : statusFilter },
+    mapReservation,
   );
+  const activeReservations = activeList.items;
 
   const pendingCount = reservations.filter(
     (reservation) => reservation.status === "pending",
@@ -67,6 +55,7 @@ export function AdminReservationsPage() {
   ) => {
     if (action === "approve") {
       await approveReservation(reservationId);
+      await activeList.refresh();
       return true;
     }
 
@@ -76,11 +65,13 @@ export function AdminReservationsPage() {
         return false;
       }
       await rejectReservation(reservationId, note);
+      await activeList.refresh();
       return true;
     }
 
     if (action === "deliver") {
       await confirmReservationDelivery(reservationId);
+      await activeList.refresh();
       return true;
     }
 
@@ -294,6 +285,9 @@ export function AdminReservationsPage() {
               No queued reservations found.
             </div>
           ) : null}
+        </div>
+        <div ref={activeList.sentinelRef} className="py-5 text-center text-sm text-slate-500">
+          {activeList.isLoading ? "Loading reservations..." : activeList.hasMore ? "Scroll to load more reservations" : activeReservations.length ? "All matching reservations loaded" : null}
         </div>
       </section>
 

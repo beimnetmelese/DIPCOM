@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
   BarChart3,
@@ -9,8 +9,11 @@ import {
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { useAppContext } from "../../context/AppContext.tsx";
+import { ApiReservation, mapReservation, useAppContext } from "../../context/AppContext.tsx";
+import { useInfiniteApiList } from "../../hooks/useInfiniteApiList.ts";
+import type { Reservation } from "../../types.ts";
 import { currency, readableDate } from "../../utils/format.ts";
+import { apiRequest } from "../../utils/api.ts";
 
 const timeRanges = [
   { key: "today", label: "Today" },
@@ -34,62 +37,11 @@ const summaryStatusOrder = [
   "delivered",
 ] as const;
 
-function isDateInRange(
-  dateString: string,
-  range: (typeof timeRanges)[number]["key"],
-  fromDate?: string,
-  toDate?: string,
-) {
-  const referenceDate = new Date(dateString);
-  const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0,
-    0,
-    0,
-    0,
-  );
-  const endOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    59,
-    999,
-  );
-
-  if (range === "all") {
-    return true;
-  }
-
-  if (range === "today") {
-    return referenceDate >= startOfToday && referenceDate <= endOfToday;
-  }
-
-  if (range === "custom") {
-    if (!fromDate && !toDate) {
-      return true;
-    }
-
-    const from = fromDate
-      ? new Date(`${fromDate}T00:00:00.000`)
-      : new Date("1970-01-01T00:00:00.000");
-    const to = toDate
-      ? new Date(`${toDate}T23:59:59.999`)
-      : new Date("9999-12-31T23:59:59.999");
-
-    return referenceDate >= from && referenceDate <= to;
-  }
-
-  const days = range === "7d" ? 7 : range === "30d" ? 30 : 365;
-  const startDate = new Date(startOfToday);
-  startDate.setDate(startDate.getDate() - (days - 1));
-
-  return referenceDate >= startDate && referenceDate <= endOfToday;
-}
+type ReservationSummary = {
+  totalUnits: number;
+  totalValue: number;
+  sellers: Array<{ sellerId: string; sellerName: string; reservations: number; units: number; value: number }>;
+};
 
 export function AdminReservationHistoryPage() {
   const { reservations } = useAppContext();
@@ -106,6 +58,7 @@ export function AdminReservationHistoryPage() {
   const [summaryFromDate, setSummaryFromDate] = useState("");
   const [summaryToDate, setSummaryToDate] = useState("");
   const [summaryStatusFilter, setSummaryStatusFilter] = useState("all");
+  const [summaryData, setSummaryData] = useState<ReservationSummary>({ totalUnits: 0, totalValue: 0, sellers: [] });
 
   const summaryStatusOptions = useMemo(() => {
     const statuses = new Set(reservations.map((reservation) => reservation.status));
@@ -121,75 +74,35 @@ export function AdminReservationHistoryPage() {
     timeRanges.find((item) => item.key === summaryTimeRange)?.label ?? "Month";
   const summaryStatusLabel = formatStatusLabel(summaryStatusFilter);
 
-  const filteredHistory = useMemo(() => {
-    return reservations
-      .filter(
-        (reservation) =>
-          reservation.status === "rejected" ||
-          reservation.status === "delivered",
-      )
-      .filter((reservation) => {
-        const referenceDate =
-          reservation.deliveredAt ??
-          reservation.rejectedAt ??
-          reservation.createdAt;
-        const matchesTimeRange = isDateInRange(
-          referenceDate,
-          historyTimeRange,
-          historyFromDate,
-          historyToDate,
-        );
-
-        const searchable =
-          `${reservation.sellerName} ${reservation.productName} ${reservation.status}`.toLowerCase();
-        const matchesQuery = searchable.includes(query.toLowerCase());
-        const matchesStatus =
-          statusFilter === "all" || reservation.status === statusFilter;
-
-        return matchesTimeRange && matchesQuery && matchesStatus;
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.deliveredAt ?? b.rejectedAt ?? b.createdAt).getTime() -
-          new Date(a.deliveredAt ?? a.rejectedAt ?? a.createdAt).getTime(),
-      );
-  }, [
-    historyFromDate,
-    historyTimeRange,
-    historyToDate,
-    query,
-    reservations,
-    statusFilter,
-  ]);
-
-  const summaryHistory = useMemo(
-    () =>
-      reservations
-        .filter((reservation) =>
-          summaryStatusFilter === "all"
-            ? true
-            : reservation.status === summaryStatusFilter,
-        )
-        .filter((reservation) => {
-          const referenceDate =
-            reservation.deliveredAt ??
-            reservation.rejectedAt ??
-            reservation.createdAt;
-          return isDateInRange(
-            referenceDate,
-            summaryTimeRange,
-            summaryFromDate,
-            summaryToDate,
-          );
-        }),
-    [
-      reservations,
-      summaryFromDate,
-      summaryStatusFilter,
-      summaryTimeRange,
-      summaryToDate,
-    ],
+  const historyDates = useMemo(() => {
+    if (historyTimeRange === "custom") return { from: historyFromDate, to: historyToDate };
+    if (historyTimeRange === "all") return { from: "", to: "" };
+    const today = new Date();
+    const days = historyTimeRange === "today" ? 1 : historyTimeRange === "7d" ? 7 : historyTimeRange === "30d" ? 30 : 365;
+    const from = new Date(today);
+    from.setDate(today.getDate() - (days - 1));
+    return { from: from.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+  }, [historyFromDate, historyTimeRange, historyToDate]);
+  const historyList = useInfiniteApiList<ApiReservation, Reservation>(
+    "/reservations/reservations/",
+    { q: query, scope: "history", status: statusFilter === "all" ? undefined : statusFilter, dateFrom: historyDates.from || undefined, dateTo: historyDates.to || undefined },
+    mapReservation,
   );
+  const filteredHistory = historyList.items;
+  const summaryDates = useMemo(() => {
+    if (summaryTimeRange === "custom") return { from: summaryFromDate, to: summaryToDate };
+    if (summaryTimeRange === "all") return { from: "", to: "" };
+    const today = new Date(); const days = summaryTimeRange === "today" ? 1 : summaryTimeRange === "7d" ? 7 : summaryTimeRange === "30d" ? 30 : 365;
+    const from = new Date(today); from.setDate(today.getDate() - (days - 1));
+    return { from: from.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+  }, [summaryFromDate, summaryTimeRange, summaryToDate]);
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (summaryStatusFilter !== "all") params.set("status", summaryStatusFilter);
+    if (summaryDates.from) params.set("dateFrom", summaryDates.from);
+    if (summaryDates.to) params.set("dateTo", summaryDates.to);
+    void apiRequest<ReservationSummary>(`/reservations/reservations/summary/?${params}`).then(setSummaryData).catch(console.error);
+  }, [summaryDates, summaryStatusFilter]);
 
   const deliveredCount = reservations.filter(
     (reservation) => reservation.status === "delivered",
@@ -199,43 +112,7 @@ export function AdminReservationHistoryPage() {
   ).length;
   const historyCount = filteredHistory.length;
 
-  const totalUnits = summaryHistory.reduce(
-    (sum, reservation) => sum + reservation.quantity,
-    0,
-  );
-  const totalValue = summaryHistory.reduce(
-    (sum, reservation) => sum + reservation.finalTotal,
-    0,
-  );
-
-  const sellerSummaries = useMemo(() => {
-    const grouped = new Map<
-      string,
-      {
-        sellerName: string;
-        reservations: number;
-        units: number;
-        value: number;
-      }
-    >();
-
-    summaryHistory.forEach((reservation) => {
-      const current = grouped.get(reservation.sellerId) ?? {
-        sellerName: reservation.sellerName,
-        reservations: 0,
-        units: 0,
-        value: 0,
-      };
-
-      current.reservations += 1;
-      current.units += reservation.quantity;
-      current.value += reservation.finalTotal;
-      grouped.set(reservation.sellerId, current);
-    });
-
-    return [...grouped.values()].sort((a, b) => b.value - a.value);
-  }, [summaryHistory]);
-
+  const { totalUnits, totalValue, sellers: sellerSummaries } = summaryData;
   const topSeller = sellerSummaries[0];
 
   return (
@@ -461,6 +338,9 @@ export function AdminReservationHistoryPage() {
               No history records found.
             </div>
           ) : null}
+        </div>
+        <div ref={historyList.sentinelRef} className="py-5 text-center text-sm text-slate-500">
+          {historyList.isLoading ? "Loading history..." : historyList.hasMore ? "Scroll to load more history" : filteredHistory.length ? "All matching history loaded" : null}
         </div>
       </section>
 

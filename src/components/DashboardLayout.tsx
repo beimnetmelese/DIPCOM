@@ -1,5 +1,5 @@
 import { Bell, LogOut } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext.tsx";
 import { DashboardSidebar } from "./DashboardSidebar.tsx";
@@ -15,6 +15,8 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
     markNotificationRead,
     logout,
     unreadNotificationCount,
+    hasMoreNotifications,
+    loadMoreNotifications,
     enableBrowserNotifications,
   } = useAppContext();
   const location = useLocation();
@@ -26,10 +28,7 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
     ? Notification.permission
     : "denied";
 
-  const visibleNotifications = useMemo(
-    () => notifications.slice(0, 8),
-    [notifications],
-  );
+  const visibleNotifications = notifications;
 
   const resolveNotificationTarget = (
     notification: (typeof notifications)[number],
@@ -45,7 +44,7 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
     }
 
     if (notification.kind.startsWith("stock_")) {
-      return role === "seller" ? "/seller/stock" : "/admin/products";
+      return role === "seller" ? "/seller/posts" : "/admin/products";
     }
 
     if (notification.kind.startsWith("reservation_")) {
@@ -131,7 +130,10 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
                     </button>
                   </div>
 
-                  <div className="max-h-[28rem] overflow-y-auto">
+                  <div className="max-h-[28rem] overflow-y-auto" onScroll={(event) => {
+                    const target = event.currentTarget;
+                    if (hasMoreNotifications && target.scrollTop + target.clientHeight >= target.scrollHeight - 40) void loadMoreNotifications();
+                  }}>
                     {visibleNotifications.length > 0 ? (
                       visibleNotifications.map((notification) => {
                         const isUnread = !notification.isRead;
@@ -172,6 +174,7 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
                         No notifications yet.
                       </div>
                     )}
+                    {hasMoreNotifications ? <p className="px-4 py-3 text-center text-xs text-slate-500">Scroll to load more</p> : null}
                   </div>
                 </div>
               ) : null}

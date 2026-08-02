@@ -33,6 +33,11 @@ export function DashboardSidebar({ role }: SidebarProps) {
       icon: <Boxes className="h-4 w-4" />,
     },
     {
+      to: "/admin/posts",
+      label: "Posts",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+    {
       to: "/admin/sellers",
       label: "Sellers",
       icon: <Users className="h-4 w-4" />,
@@ -71,17 +76,17 @@ export function DashboardSidebar({ role }: SidebarProps) {
       icon: <Clock3 className="h-4 w-4" />,
     },
     {
-      to: "/seller/stock",
-      label: "My Stock",
-      icon: <Boxes className="h-4 w-4" />,
+      to: "/seller/posts",
+      label: "My Posts",
+      icon: <ClipboardList className="h-4 w-4" />,
     },
   ];
 
   const staffLinks = [
     {
-      to: "/staff/products",
-      label: "Products",
-      icon: <Store className="h-4 w-4" />,
+      to: "/staff/posts",
+      label: "Posts",
+      icon: <ClipboardList className="h-4 w-4" />,
     },
     {
       to: "/staff/reservations",

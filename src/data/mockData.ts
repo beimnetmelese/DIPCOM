@@ -2,20 +2,20 @@ import { Product, Reservation, Seller, SellerProduct } from '../types.ts'
 import { contactPhone } from "../utils/branding.ts";
 
 export const initialProducts: Product[] = [
-  { id: 'p1', name: 'HP LaserJet Pro M404dn', price: 450, stock: 18, brand: 'HP', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-10' },
-  { id: 'p2', name: 'Canon PIXMA G6020', price: 320, stock: 12, brand: 'Canon', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1585792180666-f7347c490ee2?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-14' },
-  { id: 'p3', name: 'Epson EcoTank ET-2850', price: 360, stock: 7, brand: 'Epson', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-17' },
-  { id: 'p4', name: 'Brother HL-L2370DW', price: 290, stock: 5, brand: 'Brother', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-22' },
-  { id: 'p5', name: 'Xerox B225 Multifunction', price: 399, stock: 9, brand: 'Xerox', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1582582429416-f365cae7a7cd?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-24' },
-  { id: 'p6', name: 'Logitech MX Master Scanner Pack', price: 199, stock: 4, brand: 'Logitech', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1587302912306-cf1ed9c33146?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-28' },
-  { id: 'p7', name: 'Premium Toner Cartridge TK-1170', price: 75, stock: 43, brand: 'Kyocera', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516542076529-1ea3854896c4?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-01' },
-  { id: 'p8', name: 'A4 Thermal Label Roll x10', price: 42, stock: 31, brand: 'PrintFlex', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-04' },
-  { id: 'p9', name: 'Industrial Ink Kit C/M/Y/K', price: 125, stock: 13, brand: 'Canon', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-08' },
-  { id: 'p10', name: 'HP OfficeJet Pro 9015e', price: 389, stock: 3, brand: 'HP', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-12' },
-  { id: 'p11', name: 'Brother MFC-L2750DW', price: 410, stock: 6, brand: 'Brother', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1527871369852-eb58cb2bcd89?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-14' },
-  { id: 'p12', name: 'Wireless Print Server Hub', price: 149, stock: 16, brand: 'NetPrint', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-18' },
-  { id: 'p13', name: 'Epson WorkForce WF-2930', price: 270, stock: 2, brand: 'Epson', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-22' },
-  { id: 'p14', name: 'Auto Duplexer Upgrade Module', price: 95, stock: 20, brand: 'PrintFlex', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-25' },
+  { id: 'p1', name: 'HP LaserJet Pro M404dn', price: 450, stock: 18, brand: 'HP', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-10', hotDeal: true },
+  { id: 'p2', name: 'Canon PIXMA G6020', price: 320, stock: 12, brand: 'Canon', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1585792180666-f7347c490ee2?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-14', hotDeal: false },
+  { id: 'p3', name: 'Epson EcoTank ET-2850', price: 360, stock: 7, brand: 'Epson', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-17', hotDeal: false },
+  { id: 'p4', name: 'Brother HL-L2370DW', price: 290, stock: 5, brand: 'Brother', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-22', hotDeal: false },
+  { id: 'p5', name: 'Xerox B225 Multifunction', price: 399, stock: 9, brand: 'Xerox', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1582582429416-f365cae7a7cd?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-24', hotDeal: false },
+  { id: 'p6', name: 'Logitech MX Master Scanner Pack', price: 199, stock: 4, brand: 'Logitech', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1587302912306-cf1ed9c33146?auto=format&fit=crop&w=900&q=80', createdAt: '2026-01-28', hotDeal: false },
+  { id: 'p7', name: 'Premium Toner Cartridge TK-1170', price: 75, stock: 43, brand: 'Kyocera', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516542076529-1ea3854896c4?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-01', hotDeal: false },
+  { id: 'p8', name: 'A4 Thermal Label Roll x10', price: 42, stock: 31, brand: 'PrintFlex', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-04', hotDeal: true },
+  { id: 'p9', name: 'Industrial Ink Kit C/M/Y/K', price: 125, stock: 13, brand: 'Canon', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-08', hotDeal: false },
+  { id: 'p10', name: 'HP OfficeJet Pro 9015e', price: 389, stock: 3, brand: 'HP', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-12', hotDeal: false },
+  { id: 'p11', name: 'Brother MFC-L2750DW', price: 410, stock: 6, brand: 'Brother', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1527871369852-eb58cb2bcd89?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-14', hotDeal: false },
+  { id: 'p12', name: 'Wireless Print Server Hub', price: 149, stock: 16, brand: 'NetPrint', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-18', hotDeal: false },
+  { id: 'p13', name: 'Epson WorkForce WF-2930', price: 270, stock: 2, brand: 'Epson', category: 'Printers', categoryId: 'c1', imageUrl: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-22', hotDeal: false },
+  { id: 'p14', name: 'Auto Duplexer Upgrade Module', price: 95, stock: 20, brand: 'PrintFlex', category: 'Accessories', categoryId: 'c2', imageUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80', createdAt: '2026-02-25', hotDeal: false },
 ]
 
 export const initialSellers: Seller[] = [
@@ -138,6 +138,8 @@ export const initialSellerProducts: SellerProduct[] = [
     categoryId: 'c2',
     imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
     createdAt: '2026-03-04',
+    moderationStatus: 'approved',
+    isAvailable: true,
   },
   {
     id: 'sp2',
@@ -150,6 +152,8 @@ export const initialSellerProducts: SellerProduct[] = [
     categoryId: 'c2',
     imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80',
     createdAt: '2026-03-20',
+    moderationStatus: 'approved',
+    isAvailable: true,
   },
   {
     id: 'sp3',
@@ -162,6 +166,8 @@ export const initialSellerProducts: SellerProduct[] = [
     categoryId: 'c1',
     imageUrl: 'https://images.unsplash.com/photo-1628167343682-1f6d7b2e1b5d?auto=format&fit=crop&w=900&q=80',
     createdAt: '2026-04-06',
+    moderationStatus: 'approved',
+    isAvailable: true,
   },
   {
     id: 'sp4',
@@ -174,5 +180,7 @@ export const initialSellerProducts: SellerProduct[] = [
     categoryId: 'c2',
     imageUrl: 'https://images.unsplash.com/photo-1516542076529-1ea3854896c4?auto=format&fit=crop&w=900&q=80',
     createdAt: '2026-03-25',
+    moderationStatus: 'approved',
+    isAvailable: true,
   },
 ]

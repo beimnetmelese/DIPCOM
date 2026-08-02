@@ -9,11 +9,12 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
+import { useEffect, useState } from "react";
 import { Boxes, DollarSign, Users } from "lucide-react";
 import { Bar, Line, Pie } from "react-chartjs-2";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { useAppContext } from "../../context/AppContext.tsx";
+import { apiRequest } from "../../utils/api.ts";
 import { currency } from "../../utils/format.ts";
 
 ChartJS.register(
@@ -28,52 +29,38 @@ ChartJS.register(
 );
 
 export function AdminOverviewPage() {
-  const { categories, products, sellers, reservations } = useAppContext();
-
-  const totalStockValue = products.reduce(
-    (sum, product) => sum + product.stock * product.price,
-    0,
-  );
+  const [summary, setSummary] = useState<{ totalProducts: number; stockValue: number; totalSellers: number; brands: Array<{ brand: string; units: number }>; categories: Array<{ id: string; name: string; units: number | null }>; recentReservations: Array<{ id: string; product_name: string; seller_name: string; final_total: number }> }>({ totalProducts: 0, stockValue: 0, totalSellers: 0, brands: [], categories: [], recentReservations: [] });
+  useEffect(() => { void apiRequest<typeof summary>("/site/dashboard-summary/").then(setSummary).catch(console.error); }, []);
   const salesTrend = [14200, 15600, 13900, 18900, 20100, 22600];
 
-  const categoryLabels = categories.length
-    ? categories.map((category) => category.name)
+  const categoryLabels = summary.categories.length
+    ? summary.categories.map((category) => category.name)
     : ["No categories yet"];
-  const categoryData = categories.length
-    ? categories.map((category) =>
-        products
-          .filter((product) => product.categoryId === category.id)
-          .reduce((sum, product) => sum + product.stock, 0),
-      )
+  const categoryData = summary.categories.length
+    ? summary.categories.map((category) => category.units ?? 0)
     : [0];
 
-  const brandCounts = [
-    ...new Set(products.map((product) => product.brand)),
-  ].slice(0, 6);
-  const brandStocks = brandCounts.map((brand) =>
-    products
-      .filter((product) => product.brand === brand)
-      .reduce((sum, product) => sum + product.stock, 0),
-  );
+  const brandCounts = summary.brands.map((brand) => brand.brand);
+  const brandStocks = summary.brands.map((brand) => brand.units ?? 0);
 
   return (
     <AnimatedPage>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           title="Total Products"
-          value={String(products.length)}
+          value={String(summary.totalProducts)}
           note="Inventory SKUs tracked"
           icon={<Boxes className="h-5 w-5" />}
         />
         <StatCard
           title="Stock Value"
-          value={currency(totalStockValue)}
+          value={currency(summary.stockValue)}
           note="Real-time inventory valuation"
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
           title="Total Sellers"
-          value={String(sellers.length)}
+          value={String(summary.totalSellers)}
           note="Approved + pending accounts"
           icon={<Users className="h-5 w-5" />}
         />
@@ -160,21 +147,21 @@ export function AdminOverviewPage() {
             Recent Reservations
           </p>
           <div className="mt-3 space-y-2">
-            {reservations.slice(0, 6).map((reservation) => (
+            {summary.recentReservations.map((reservation) => (
               <div
                 key={reservation.id}
                 className="flex items-center justify-between rounded-xl bg-orange-50/70 px-3 py-2"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
-                    {reservation.productName}
+                    {reservation.product_name}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {reservation.sellerName}
+                    {reservation.seller_name}
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-orange-700">
-                  {currency(reservation.finalTotal)}
+                  {currency(reservation.final_total)}
                 </p>
               </div>
             ))}

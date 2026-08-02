@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import {
-  initialProducts,
   initialReservations,
   initialSellerProducts,
   initialSellers,
@@ -26,6 +25,7 @@ import type {
   SiteSettings,
   SellerStatus,
   ToastMessage,
+  SellerProductModerationStatus,
 } from "../types.ts";
 import {
   apiRequest,
@@ -92,6 +92,7 @@ interface AppContextValue {
   currentUser: AuthUser | null;
   categories: Category[];
   products: Product[];
+  publicSellerProducts: SellerProduct[];
   sellerProducts: SellerProduct[];
   sellers: Seller[];
   adminAccounts: AdminAccount[];
@@ -101,6 +102,8 @@ interface AppContextValue {
   siteSettings: SiteSettings;
   toasts: ToastMessage[];
   unreadNotificationCount: number;
+  hasMoreNotifications: boolean;
+  loadMoreNotifications: () => Promise<void>;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   registerSeller: (payload: RegisterPayload) => Promise<LoginResult>;
@@ -134,6 +137,10 @@ interface AppContextValue {
     payload: SellerProductUpsertPayload,
   ) => Promise<void>;
   deleteSellerProduct: (productId: string) => Promise<void>;
+  approveSellerProduct: (productId: string) => Promise<void>;
+  rejectSellerProduct: (productId: string, note: string) => Promise<void>;
+  markSellerProductAvailable: (productId: string) => Promise<void>;
+  markSellerProductUnavailable: (productId: string) => Promise<void>;
   reserveProduct: (
     productId: string,
     quantity: number,
@@ -171,7 +178,7 @@ type ApiCategory = {
   updatedAt?: string;
 };
 
-type ApiSeller = {
+export type ApiSeller = {
   id: string;
   name: string;
   email: string;
@@ -208,12 +215,16 @@ type ApiProduct = {
   categoryId: string;
   imageUrl?: string;
   condition?: "new" | "used";
+  hotDeal?: boolean;
   createdAt: string;
 };
 
-type ApiSellerProduct = {
+export type ApiSellerProduct = {
   id: string;
   sellerId?: string;
+  sellerName?: string;
+  sellerBusinessName?: string;
+  sellerPhoneNumber?: string;
   name: string;
   price: string | number;
   stock: number;
@@ -222,10 +233,16 @@ type ApiSellerProduct = {
   categoryId: string;
   imageUrl?: string;
   condition?: "new" | "used";
+  hotDeal?: boolean;
   createdAt: string;
+  moderationStatus?: SellerProductModerationStatus;
+  moderationNote?: string;
+  moderatedByName?: string;
+  moderatedAt?: string;
+  isAvailable?: boolean;
 };
 
-type ApiReservation = {
+export type ApiReservation = {
   id: string;
   productId: string;
   productName: string;
@@ -252,6 +269,9 @@ type ApiNotification = {
   createdAt: string;
   readAt?: string;
 };
+
+type PaginatedResponse<T> = { results: T[]; count?: number; next?: string | null };
+const pageResults = <T,>(response: PaginatedResponse<T>) => response.results;
 
 const defaultSiteSettings: SiteSettings = {
   id: 1,
@@ -324,14 +344,18 @@ function mapProduct(product: ApiProduct): Product {
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
     condition: product.condition ?? "new",
+    hotDeal: product.hotDeal ?? false,
     createdAt: product.createdAt,
   };
 }
 
-function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
+export function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
   return {
     id: product.id,
     sellerId: product.sellerId ?? "",
+    sellerName: product.sellerName,
+    sellerBusinessName: product.sellerBusinessName,
+    sellerPhoneNumber: product.sellerPhoneNumber,
     name: product.name,
     price: toNumber(product.price),
     stock: product.stock,
@@ -340,11 +364,17 @@ function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
     condition: product.condition ?? "new",
+    hotDeal: product.hotDeal ?? false,
     createdAt: product.createdAt,
+    moderationStatus: product.moderationStatus ?? "pending",
+    moderationNote: product.moderationNote ?? "",
+    moderatedByName: product.moderatedByName,
+    moderatedAt: product.moderatedAt,
+    isAvailable: product.isAvailable ?? true,
   };
 }
 
-function mapSeller(seller: ApiSeller): Seller {
+export function mapSeller(seller: ApiSeller): Seller {
   const isRemoved = Boolean(seller.removed);
   return {
     id: seller.id,
@@ -379,7 +409,7 @@ function mapAdminAccount(admin: ApiAdminAccount): AdminAccount {
   };
 }
 
-function mapReservation(reservation: ApiReservation): Reservation {
+export function mapReservation(reservation: ApiReservation): Reservation {
   const normalizedStatus =
     reservation.status === "reserve" ? "pending" : reservation.status;
 
@@ -553,13 +583,17 @@ async function buildCatalogFormData(payload: ProductUpsertPayload) {
   if (payload.condition) {
     data.append("condition", payload.condition);
   }
+  if (payload.hotDeal !== undefined) {
+    data.append("hotDeal", String(payload.hotDeal));
+  }
   return data;
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+    const [publicSellerProducts, setPublicSellerProducts] = useState<SellerProduct[]>([]);
   const [sellerProducts, setSellerProducts] = useState<SellerProduct[]>(
     initialSellerProducts,
   );
@@ -576,6 +610,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     useState<SiteSettings>(defaultSiteSettings);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [notificationNext, setNotificationNext] = useState<string | null>(null);
   const notificationDeviceKeyRef = useRef(getOrCreateNotificationDeviceKey());
   const seenNotificationIdsRef = useRef<Set<string>>(
     new Set(getSeenNotificationIds()),
@@ -600,13 +635,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshPublicData = async () => {
     try {
-      const [categoriesResponse, productsResponse] = await Promise.all([
+      const [categoriesResponse, productsResponse, sellerProductsResponse] = await Promise.all([
         apiRequest<ApiCategory[]>("/catalog/categories/"),
         apiRequest<ApiProduct[]>("/catalog/products/"),
+        apiRequest<PaginatedResponse<ApiSellerProduct>>('/catalog/seller-products/?page_size=100'),
       ]);
 
       setCategories(categoriesResponse.map(mapCategory));
       setProducts(productsResponse.map(mapProduct));
+      setPublicSellerProducts(pageResults(sellerProductsResponse).map(mapSellerProduct));
 
       // Intentionally do NOT fetch site settings from the backend.
       // We rely on the hard-coded `defaultSiteSettings` above so the UI
@@ -632,26 +669,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
           reservationsResponse,
           sellerProductsResponse,
         ] = await Promise.all([
-          apiRequest<ApiSeller[]>("/accounts/sellers/"),
+          apiRequest<PaginatedResponse<ApiSeller>>("/accounts/sellers/?page_size=100"),
           apiRequest<ApiAdminAccount[]>("/accounts/admins/"),
-          apiRequest<ApiReservation[]>("/reservations/reservations/"),
-          apiRequest<ApiSellerProduct[]>("/catalog/seller-products/"),
+          apiRequest<PaginatedResponse<ApiReservation>>("/reservations/reservations/?page_size=100"),
+          apiRequest<PaginatedResponse<ApiSellerProduct>>("/catalog/seller-products/?page_size=100"),
         ]);
 
-        setSellers(sellersResponse.map(mapSeller));
+        setSellers(pageResults(sellersResponse).map(mapSeller));
         setAdminAccounts(adminsResponse.map(mapAdminAccount));
-        setReservations(reservationsResponse.map(mapReservation));
-        setSellerProducts(sellerProductsResponse.map(mapSellerProduct));
+        setReservations(pageResults(reservationsResponse).map(mapReservation));
+        setSellerProducts(pageResults(sellerProductsResponse).map(mapSellerProduct));
         return;
       }
 
       const [reservationsResponse, sellerProductsResponse] = await Promise.all([
-        apiRequest<ApiReservation[]>("/reservations/reservations/"),
-        apiRequest<ApiSellerProduct[]>("/catalog/seller-products/"),
+        apiRequest<PaginatedResponse<ApiReservation>>("/reservations/reservations/?page_size=100"),
+        apiRequest<PaginatedResponse<ApiSellerProduct>>("/catalog/seller-products/?page_size=100"),
       ]);
 
-      setReservations(reservationsResponse.map(mapReservation));
-      setSellerProducts(sellerProductsResponse.map(mapSellerProduct));
+      setReservations(pageResults(reservationsResponse).map(mapReservation));
+      setSellerProducts(pageResults(sellerProductsResponse).map(mapSellerProduct));
     } catch (error) {
       console.error(error);
     }
@@ -809,18 +846,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const [allNotificationsResponse, notificationsResponse] =
         await Promise.all([
-          apiRequest<ApiNotification[]>("/notifications/list/"),
-          apiRequest<ApiNotification[]>("/notifications/inbox/"),
+          apiRequest<PaginatedResponse<ApiNotification>>("/notifications/list/?page_size=25"),
+          apiRequest<PaginatedResponse<ApiNotification>>("/notifications/inbox/?page_size=1"),
         ]);
 
-      setNotifications(allNotificationsResponse);
-      setUnreadNotificationCount(notificationsResponse.length);
+      setNotifications(pageResults(allNotificationsResponse));
+      setNotificationNext(allNotificationsResponse.next ?? null);
+      setUnreadNotificationCount(notificationsResponse.count ?? 0);
 
-      if (notificationsResponse.length === 0) {
+      const unreadNotifications = pageResults(notificationsResponse);
+      if (unreadNotifications.length === 0) {
         return;
       }
 
-      const unseenNotifications = notificationsResponse.filter(
+      const unseenNotifications = unreadNotifications.filter(
         (notification) => !seenNotificationIdsRef.current.has(notification.id),
       );
 
@@ -833,6 +872,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const loadMoreNotifications = async () => {
+    if (!notificationNext) return;
+    const url = new URL(notificationNext);
+    const path = `${url.pathname.replace(/^\/api/, "")}${url.search}`;
+    const response = await apiRequest<PaginatedResponse<ApiNotification>>(path);
+    setNotifications((previous) => [...previous, ...pageResults(response)]);
+    setNotificationNext(response.next ?? null);
   };
 
   const enableBrowserNotifications = async () => {
@@ -881,8 +929,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAdminAccounts([]);
       setReservations([]);
       setSellerProducts([]);
+      setPublicSellerProducts([]);
       setNotifications([]);
       setUnreadNotificationCount(0);
+      void refreshPublicData();
       pushToast("Session expired", "Please sign in again.", "warning");
     };
 
@@ -998,8 +1048,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAdminAccounts([]);
     setReservations([]);
     setSellerProducts([]);
+    setPublicSellerProducts([]);
     setNotifications([]);
     setUnreadNotificationCount(0);
+    void refreshPublicData();
     pushToast("Signed out", "Session closed securely.", "info");
   };
 
@@ -1435,6 +1487,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const approveSellerProduct = async (productId: string) => {
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/approve/`, {
+        method: "POST",
+      });
+      await refreshForCurrentUser(currentUser?.role);
+      pushToast("Post approved", "The seller post is now public.", "success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to approve post.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const rejectSellerProduct = async (productId: string, note: string) => {
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/reject/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note }),
+      });
+      await refreshForCurrentUser(currentUser?.role);
+      pushToast("Post rejected", "The seller received your note.", "warning");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to reject post.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const markSellerProductUnavailable = async (productId: string) => {
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/mark-unavailable/`, {
+        method: "POST",
+      });
+      await refreshForCurrentUser(currentUser?.role);
+      pushToast("Post hidden", "The seller post is now unavailable.", "info");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update post.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
+  const markSellerProductAvailable = async (productId: string) => {
+    try {
+      await apiRequest(`/catalog/seller-products/${productId}/mark-available/`, {
+        method: "POST",
+      });
+      await refreshForCurrentUser(currentUser?.role);
+      pushToast("Post restored", "The seller post is visible again.", "success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update post.";
+      pushToast("Action failed", message, "warning");
+    }
+  };
+
   const reserveProduct = async (
     productId: string,
     quantity: number,
@@ -1560,6 +1670,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currentUser,
       categories,
       products,
+      publicSellerProducts,
       sellerProducts,
       sellers,
       adminAccounts,
@@ -1569,6 +1680,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       siteSettings,
       toasts,
       unreadNotificationCount,
+      hasMoreNotifications: Boolean(notificationNext),
+      loadMoreNotifications,
       login,
       logout,
       changePassword,
@@ -1589,6 +1702,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addSellerProduct,
       updateSellerProduct,
       deleteSellerProduct,
+      approveSellerProduct,
+      rejectSellerProduct,
+      markSellerProductUnavailable,
+      markSellerProductAvailable,
       reserveProduct,
       markNotificationRead,
       approveReservation,
@@ -1602,6 +1719,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currentUser,
       categories,
       products,
+      publicSellerProducts,
       sellerProducts,
       sellers,
       adminAccounts,
@@ -1611,6 +1729,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       siteSettings,
       toasts,
       unreadNotificationCount,
+      notificationNext,
     ],
   );
 

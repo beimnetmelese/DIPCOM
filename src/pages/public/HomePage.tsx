@@ -15,25 +15,30 @@ import { companyLogo, companyName } from "../../utils/branding.ts";
 
 const services = [
   {
-    title: "Digital Printing Solutions",
+    title: "Digital printing machinery solutions",
     icon: <Truck className="h-5 w-5" />,
-    text: "We supply digital printing equipment and office technology with careful sourcing, quality checks, and practical product selection.",
+    text: "We supply digital printing machine and office technology with careful sourcing, quality checks, and practical product selection.",
   },
   {
     title: "Maintenance and Support",
     icon: <Wrench className="h-5 w-5" />,
-    text: "We maintain, repair, and support office equipment so organizations can keep daily operations running without unnecessary downtime.",
+    text: "We maintain, repair, and support office equipment machinery so organizations can keep daily operations running without unnecessary downtime.",
   },
   {
     title: "Training and Consultation",
     icon: <GraduationCap className="h-5 w-5" />,
-    text: "We provide practical hands-on training, toner refilling guidance, setup support, and consultation for teams and individuals.",
+    text: "We provide practical hands-on training for company's staff, individual, teams. Setup support, and consultation for organization, government office and private companys ",
+  },
+  {
+    title: "Digital Printing Machine Rental ",
+    icon: <Truck className="h-5 w-5" />,
+    text: "High performance multifunction equipment tailored for your business with out the heavy upfront costs.",
   },
 ];
 
 const highlights = [
   "18+ years of industry experience",
-  "Imported office equipment and consumables",
+  "imported office equipment machinery and consumables",
   "Maintenance, training, and consultation",
   "Fast customer support and response",
 ];
@@ -45,11 +50,11 @@ const steps = [
   },
   {
     title: "Deliver and maintain",
-    text: "We deliver reliable equipment, handle maintenance and toner support, and keep systems ready for daily use.",
+    text: "We deliver reliable equipment, handle maintenance, and keep systems ready for daily use.",
   },
   {
     title: "Train and support",
-    text: "We provide practical training and consultation so teams can work efficiently and confidently.",
+    text: "We provide practical training and consultation so Organization can work efficiently and confidently.",
   },
 ];
 
@@ -97,13 +102,13 @@ export function HomePage() {
                   className="h-full w-full object-contain"
                 />
               </span>
-              {siteSettings.heroTagline}
+              Digital Printing Machinery & Office Technology Solutions
             </p>
             <h1 className="mt-5 max-w-2xl font-heading text-4xl font-bold leading-tight text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)] sm:text-5xl lg:text-6xl">
               {siteSettings.heroTitle}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
-              {siteSettings.heroDescription}
+              DIPCOM Technology Solutions specializes in digital printing machines, office imaging equipment, and related accessories and spare parts, backed by over 18 years of industry experience. We support organizations, businesses, institutions, and individuals through the distribution of specialized machinery (including plotters, digital duplicators, copiers, scanners, and high-volume printers), alongside expert maintenance, technical training, and consultation services designed to boost productivity, lower operating costs, and keep workflows efficient.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -234,7 +239,6 @@ export function HomePage() {
               "Skilled and experienced technical professionals",
               "Reliable maintenance and support services",
               "High-quality imported office equipment",
-              "Affordable and efficient toner solutions",
               "Practical hands-on technical training",
               "Fast customer support and response",
               "Professional consultation services",

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import whatsAppQr from "../../assets/WhatappsQR.jpg";
 
 export function ContactPage() {
   const { siteSettings } = useAppContext();
@@ -23,9 +24,8 @@ export function ContactPage() {
             <p className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur">
               <Sparkles className="h-4 w-4" /> Contact Us
             </p>
-            <h1 className="mt-4 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-              Reach us for importing, maintenance, training, toner refilling,
-              and consultation.
+            <h1 className="mt-4 font-heading text-2xl font-bold leading-tight sm:text-2xl">
+              REACH OUT TO US FOR THE SUPPLY AND DISTRIBUTION OF DIGITAL PRINTING MACHINERY (PLOTTERS, PRINTERS, SCANNERS, PHOTOCOPIERS, AND DUPLICATORS), OFFICE MACHINE MAINTENANCE, SPARE PARTS AND ACCESSORIES (TONER CARTRIDGES, OPCS, DRUM UNITS, FUSER UNITS), AS WELL AS TRAINING AND CONSULTATION.
             </h1>
             <p className="mt-4 max-w-2xl text-white/90">
               Visit us, call us, or use the map below to find our office near
@@ -68,10 +68,40 @@ export function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Phone
+                      Sales Phone Number
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      {siteSettings.contactPhone}
+                      +251979808182
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <PhoneCall className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Technical support Phone Number
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                      +251953205353
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <PhoneCall className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Management Phone Number
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                      +251949804949
                     </p>
                   </div>
                 </div>
@@ -87,7 +117,7 @@ export function ContactPage() {
                       Hours
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      {siteSettings.businessHours}
+                      Monday - Saturday, 8:30 AM - 6:00 PM (closed on Sundays). Reach us during these hours for importing, maintenance, training and consultation.
                     </p>
                   </div>
                 </div>
@@ -113,34 +143,77 @@ export function ContactPage() {
                   </div>
                 </div>
               </div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <ExternalLink className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Telegram
+                    </p>
+                    <a
+                      href="https://t.me/DIPCOM22"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
+                    >
+                      @DIPCOM22
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </article>
 
-          <article className="overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-soft">
-            <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
-                  Location
-                </p>
-                <h2 className="font-heading text-xl font-semibold text-slate-900">
-                  Find us on the map
-                </h2>
+          <div className="space-y-6">
+            <article className="overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-soft">
+              <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
+                    Location
+                  </p>
+                  <h2 className="font-heading text-xl font-semibold text-slate-900">
+                    Find us on the map
+                  </h2>
+                </div>
               </div>
-            </div>
-            <div className="aspect-[16/12] w-full bg-orange-50">
-              <iframe
-                src={mapUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="DIPCOM Technology Solutions location"
-                className="h-full min-h-[420px] w-full"
-              />
-            </div>
-          </article>
+              <div className="aspect-[16/12] w-full bg-orange-50">
+                <iframe
+                  src={mapUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="DIPCOM Technology Solutions location"
+                  className="h-full min-h-[420px] w-full"
+                />
+              </div>
+            </article>
+
+            <article className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft sm:flex sm:items-center sm:gap-5">
+              <div className="mx-auto h-72 w-72 overflow-hidden rounded-2xl border border-orange-100 bg-white sm:mx-0">
+                <img
+                  src={whatsAppQr}
+                  alt="DIPCOM WhatsApp QR code"
+                  className="h-auto w-full max-w-none -translate-y-[18%] scale-[1.45]"
+                />
+              </div>
+              <div className="mt-4 text-center sm:mt-0 sm:text-left">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
+                  WhatsApp
+                </p>
+                <h2 className="mt-1 font-heading text-xl font-semibold text-slate-900">
+                  Scan to chat with us
+                </h2>
+                <a href="https://wa.me/message/TQLBUMUI54Q7M1" target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-semibold text-emerald-700 hover:text-emerald-800">
+                  Open WhatsApp chat
+                </a>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </AnimatedPage>

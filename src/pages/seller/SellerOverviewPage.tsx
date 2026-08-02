@@ -10,7 +10,7 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Boxes,
@@ -23,6 +23,7 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
+import { apiRequest } from "../../utils/api.ts";
 import { currency } from "../../utils/format.ts";
 
 ChartJS.register(
@@ -39,6 +40,8 @@ ChartJS.register(
 
 export function SellerOverviewPage() {
   const { currentUser, sellerProducts } = useAppContext();
+  const [summary, setSummary] = useState<{ products: number; totalUnits: number; inventoryValue: number; healthy: number; lowStock: number; outOfStock: number; categories: Array<{ category__name: string; count: number }>; topProducts: Array<{ name: string; units: number }> }>({ products: 0, totalUnits: 0, inventoryValue: 0, healthy: 0, lowStock: 0, outOfStock: 0, categories: [], topProducts: [] });
+  useEffect(() => { void apiRequest<typeof summary>("/catalog/seller-products/summary/").then(setSummary).catch(console.error); }, []);
 
   const myProducts = useMemo(
     () =>
@@ -46,18 +49,11 @@ export function SellerOverviewPage() {
     [currentUser?.id, sellerProducts],
   );
 
-  const totalUnits = myProducts.reduce((sum, item) => sum + item.stock, 0);
-  const inventoryValue = myProducts.reduce(
-    (sum, item) => sum + item.price * item.stock,
-    0,
-  );
+  const totalUnits = summary.totalUnits;
+  const inventoryValue = summary.inventoryValue;
   const averageUnitValue = totalUnits > 0 ? inventoryValue / totalUnits : 0;
-  const lowStockProducts = myProducts.filter(
-    (product) => product.stock > 0 && product.stock <= 3,
-  ).length;
-  const outOfStockProducts = myProducts.filter(
-    (product) => product.stock === 0,
-  ).length;
+  const lowStockProducts = summary.lowStock;
+  const outOfStockProducts = summary.outOfStock;
 
   const monthlyAddedTrend = useMemo(() => {
     const monthFormatter = new Intl.DateTimeFormat("en", { month: "short" });
@@ -96,7 +92,8 @@ export function SellerOverviewPage() {
     return [...grouped.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   }, [myProducts]);
 
-  const categorySplit = useMemo(() => {
+  const categorySplit = summary.categories.map((item) => [item.category__name, item.count] as [string, number]);
+  /* const categorySplit = useMemo(() => {
     const grouped = new Map<string, number>();
 
     myProducts.forEach((product) => {
@@ -105,7 +102,7 @@ export function SellerOverviewPage() {
     });
 
     return [...grouped.entries()];
-  }, [myProducts]);
+  }, [myProducts]); */
 
   return (
     <AnimatedPage>
@@ -131,7 +128,7 @@ export function SellerOverviewPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="My Products"
-          value={String(myProducts.length)}
+          value={String(summary.products)}
           note="Items in your stock list"
           icon={<Package className="h-5 w-5" />}
         />
@@ -164,7 +161,7 @@ export function SellerOverviewPage() {
             <Package className="h-5 w-5 text-emerald-600" />
           </div>
           <p className="mt-3 font-heading text-3xl font-bold text-slate-900">
-            {myProducts.filter((product) => product.stock > 3).length}
+            {summary.healthy}
           </p>
           <p className="mt-1 text-sm text-slate-500">Well-stocked products</p>
         </article>

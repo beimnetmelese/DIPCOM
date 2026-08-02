@@ -56,7 +56,7 @@ export function PublicFooter() {
             </div>
             <div className="flex items-start gap-3">
               <Mail className="mt-0.5 h-4 w-4 text-orange-300" />
-              <span>support@dipcomtechnologies.com</span>
+              <span>Dipcomtech@gmail.com</span>
             </div>
             <a
               href="https://www.tiktok.com/@dipcomtechnologies"
@@ -65,6 +65,22 @@ export function PublicFooter() {
               className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
             >
               TikTok page <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <a
+              href="https://t.me/DIPCOM22"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
+            >
+              Telegram <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <a
+              href="https://wa.me/message/TQLBUMUI54Q7M1"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
+            >
+              WhatsApp <ArrowUpRight className="h-4 w-4" />
             </a>
           </div>
         </div>
