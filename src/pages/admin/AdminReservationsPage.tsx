@@ -48,6 +48,9 @@ export function AdminReservationsPage() {
   const deliveredCount = reservations.filter(
     (reservation) => reservation.status === "delivered",
   ).length;
+  const rejectedCount = reservations.filter(
+    (reservation) => reservation.status === "rejected",
+  ).length;
 
   const runAction = async (
     reservationId: string,
@@ -98,7 +101,7 @@ export function AdminReservationsPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Pending"
           value={String(pendingCount)}
@@ -110,6 +113,12 @@ export function AdminReservationsPage() {
           value={String(approvedCount)}
           note="Ready for delivery"
           icon={<Warehouse className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Rejected"
+          value={String(rejectedCount)}
+          note="Declined reservations"
+          icon={<AlertTriangle className="h-5 w-5" />}
         />
         <StatCard
           title="Delivered"
