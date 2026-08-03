@@ -22,6 +22,8 @@ export function RegisterPage() {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -32,8 +34,13 @@ export function RegisterPage() {
     password: "",
   });
 
+  const fieldError = (...fields: string[]) =>
+    fields.map((field) => fieldErrors[field]).find(Boolean);
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
+    setFormError("");
     setIsSubmitting(true);
     const fullPhoneNumber = `${phonePrefix}${form.phoneNumber}`;
     try {
@@ -52,6 +59,9 @@ export function RegisterPage() {
           phoneNumber: "",
           password: "",
         });
+      } else {
+        setFieldErrors(result.fieldErrors ?? {});
+        setFormError(result.fieldErrors && Object.keys(result.fieldErrors).length ? "Please correct the highlighted details and try again." : result.message);
       }
     } finally {
       setIsSubmitting(false);
@@ -136,6 +146,7 @@ export function RegisterPage() {
           ) : null}
 
           <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
+            {formError ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800" role="alert">{formError}</div> : null}
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Full Name
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-orange-300">
@@ -150,6 +161,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("name", "display_name") ? <p className="text-xs font-medium text-rose-600">{fieldError("name", "display_name")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Email Address
@@ -166,6 +178,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("email") ? <p className="text-xs font-medium text-rose-600">{fieldError("email")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Business Name
@@ -184,6 +197,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("businessName", "business_name") ? <p className="text-xs font-medium text-rose-600">{fieldError("businessName", "business_name")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Location
@@ -202,6 +216,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("location") ? <p className="text-xs font-medium text-rose-600">{fieldError("location")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               TIN Number
@@ -220,6 +235,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("tinNumber", "tin_number") ? <p className="text-xs font-medium text-rose-600">{fieldError("tinNumber", "tin_number")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Phone Number
@@ -247,6 +263,7 @@ export function RegisterPage() {
                   required
                 />
               </div>
+              {fieldError("phoneNumber", "phone_number") ? <p className="text-xs font-medium text-rose-600">{fieldError("phoneNumber", "phone_number")}</p> : null}
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Password
@@ -278,6 +295,7 @@ export function RegisterPage() {
                   )}
                 </button>
               </div>
+              {fieldError("password") ? <p className="text-xs font-medium text-rose-600">{fieldError("password")}</p> : null}
             </label>
             <motion.button
               whileTap={{ scale: 0.98 }}

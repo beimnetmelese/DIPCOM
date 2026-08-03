@@ -29,6 +29,7 @@ import type {
 } from "../types.ts";
 import {
   apiRequest,
+  ApiValidationError,
   AUTH_EXPIRED_EVENT,
   clearStoredTokens,
   storeTokens,
@@ -81,6 +82,7 @@ interface LoginResult {
   message: string;
   role?: AuthUser["role"];
   sellerStatus?: SellerStatus;
+  fieldErrors?: Record<string, string>;
 }
 
 interface ReservationResult {
@@ -1156,7 +1158,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Registration failed.";
-      return { ok: false, message };
+      return {
+        ok: false,
+        message,
+        fieldErrors: error instanceof ApiValidationError ? error.fieldErrors : undefined,
+      };
     }
   };
 

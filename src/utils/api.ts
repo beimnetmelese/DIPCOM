@@ -1,6 +1,13 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined ?? "https://stockapi.dipcomtech.com/api").replace(/\/+$/, "");
 export const AUTH_EXPIRED_EVENT = "dipcom:auth-expired";
 
+export class ApiValidationError extends Error {
+  constructor(message: string, public readonly fieldErrors: Record<string, string> = {}) {
+    super(message);
+    this.name = "ApiValidationError";
+  }
+}
+
 const ACCESS_TOKEN_KEY = "dipcom_access_token";
 const REFRESH_TOKEN_KEY = "dipcom_refresh_token";
 let accessTokenCache: string | null = null;
@@ -69,29 +76,19 @@ async function refreshAccessToken() {
   return data.access;
 }
 
-async function parseErrorMessage(response: Response) {
+async function parseApiError(response: Response) {
   try {
     const data = await response.json() as Record<string, unknown>;
-    if (typeof data.detail === "string") {
-      return data.detail;
+    const fieldErrors: Record<string, string> = {};
+    for (const [field, value] of Object.entries(data)) {
+      if (Array.isArray(value) && typeof value[0] === "string") fieldErrors[field] = value[0];
+      else if (typeof value === "string" && field !== "detail") fieldErrors[field] = value;
     }
-
-    const firstKey = Object.keys(data)[0];
-    if (firstKey) {
-      const firstValue = data[firstKey];
-      if (Array.isArray(firstValue) && typeof firstValue[0] === "string") {
-        return firstValue[0];
-      }
-
-      if (typeof firstValue === "string") {
-        return firstValue;
-      }
-    }
+    const message = typeof data.detail === "string" ? data.detail : Object.values(fieldErrors)[0] ?? "Request could not be completed.";
+    return new ApiValidationError(message, fieldErrors);
   } catch {
-    // Fall through to a generic message.
+    return new ApiValidationError(`${response.status} ${response.statusText}`.trim());
   }
-
-  return `${response.status} ${response.statusText}`.trim();
 }
 
 export async function apiRequest<T>(
@@ -120,7 +117,7 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
+    throw await parseApiError(response);
   }
 
   if (response.status === 204) {
