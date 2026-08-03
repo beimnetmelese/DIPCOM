@@ -484,7 +484,7 @@ export function AdminSellersPage() {
                         {confirmation.action === "approve"
                           ? "This seller will be approved and can log in immediately."
                           : confirmation.action === "reject"
-                            ? "This seller will be rejected, moved out of the active queue, and the note will be saved."
+                            ? "This seller will be rejected, removed automatically, and moved to the Removed Sellers list. The note will be saved."
                             : "This seller will be removed from the approved list."}
                       </p>
                       {confirmation.action === "reject" ? (

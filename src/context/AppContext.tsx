@@ -1289,8 +1289,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       await refreshPrivateData(currentUser?.role);
       pushToast(
-        "Seller rejected",
-        "The seller application was declined.",
+        "Seller rejected and removed",
+        "The seller was moved to the Removed Sellers list.",
         "warning",
       );
     } catch (error) {
