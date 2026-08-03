@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { Seo } from "../../components/Seo.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { companyLogo, companyName } from "../../utils/branding.ts";
 
@@ -81,6 +82,7 @@ export function HomePage() {
 
   return (
     <AnimatedPage>
+      <Seo title="DIPCOM Technologies | Printing & Office Equipment" description="DIPCOM Technologies supplies digital printing machines and office equipment, with maintenance, training, toner refilling, and consultation services in Addis Ababa." />
       <section className="relative -mx-3 -mt-20 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft sm:-mx-4 lg:-mx-6">
         <div className="absolute inset-0">
           <img

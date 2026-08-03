@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, Sparkles, Truck, Wrench } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { Seo } from "../../components/Seo.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { companyLogo, companyName } from "../../utils/branding.ts";
 
@@ -36,6 +37,7 @@ export function AboutPage() {
 
   return (
     <AnimatedPage>
+      <Seo title="About DIPCOM Technologies | Office Technology Experts" description="Learn about DIPCOM Technologies and our experience providing dependable digital printing and office equipment solutions, maintenance, training, and consultation." />
       <section className="relative -mx-3 -mt-20 overflow-hidden border-y border-orange-100 bg-slate-950 shadow-soft sm:-mx-4 lg:-mx-6">
         <div className="absolute inset-0">
           <img

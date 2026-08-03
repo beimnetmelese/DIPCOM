@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BadgePercent, MessageCircle, Package, Search, Send } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { Seo } from "../../components/Seo.tsx";
 import { Modal } from "../../components/Modal.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import { useInfiniteApiList } from "../../hooks/useInfiniteApiList.ts";
@@ -46,6 +47,7 @@ export function ShopPage() {
 
   return (
     <AnimatedPage>
+      <Seo title="Shop Office Equipment | DIPCOM Technologies" description="Browse DIPCOM Technologies products, including digital printing equipment, office machines, consumables, and approved seller listings." />
       <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

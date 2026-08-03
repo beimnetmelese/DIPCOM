@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /seller/
+Disallow: /staff/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://dipcomtech.com/sitemap.xml

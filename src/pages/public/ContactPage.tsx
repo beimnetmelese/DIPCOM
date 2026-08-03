@@ -6,6 +6,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AnimatedPage } from "../../components/AnimatedPage.tsx";
+import { Seo } from "../../components/Seo.tsx";
 import { useAppContext } from "../../context/AppContext.tsx";
 import whatsAppQr from "../../assets/WhatappsQR.jpg";
 
@@ -14,6 +15,7 @@ export function ContactPage() {
   const mapUrl = siteSettings.mapUrl;
   return (
     <AnimatedPage>
+      <Seo title="Contact DIPCOM Technologies | Addis Ababa" description="Contact DIPCOM Technologies in Addis Ababa for digital printing machinery, office equipment, maintenance, training, toner refilling, and consultation." />
       <section className="overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-soft">
         <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400 px-6 py-12 text-white sm:px-8 sm:py-16">
           <div className="absolute inset-0 opacity-20">
