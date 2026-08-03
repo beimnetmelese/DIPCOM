@@ -174,6 +174,7 @@ export function ShopPage() {
                 <p className="mt-1 text-sm text-slate-500">
                   {product.category} · {product.stock} available
                 </p>
+                {product.description ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{product.description}</p> : null}
                 {'sellerId' in product ? (
                   <p className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
                     Seller post
@@ -334,6 +335,7 @@ export function ShopPage() {
               ) : null}
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                {selectedProduct.description ? <><p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Description</p><p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{selectedProduct.description}</p><div className="my-4 border-t border-slate-200" /></> : null}
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Product details
                 </p>

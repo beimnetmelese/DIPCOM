@@ -18,6 +18,7 @@ const emptyForm = {
   priceInput: "",
   stockInput: "",
   brand: "",
+  description: "",
   categoryId: "",
   imageFile: null as File | null,
   condition: "new",
@@ -131,6 +132,7 @@ export function AdminProductsPage() {
       priceInput: String(product.price),
       stockInput: String(product.stock),
       brand: product.brand,
+      description: product.description ?? "",
       categoryId: product.categoryId,
       condition: (product as any).condition ?? "new",
       hotDeal: Boolean(product.hotDeal),
@@ -175,6 +177,7 @@ export function AdminProductsPage() {
       price: parsedPrice,
       stock: parsedStock,
       brand: form.brand,
+      description: form.description.trim(),
       condition: (form as any).condition ?? "new",
       hotDeal: Boolean(form.hotDeal),
       categoryId: form.categoryId,
@@ -426,6 +429,7 @@ export function AdminProductsPage() {
                   {product.name}
                 </p>
                 <p className="text-sm text-slate-500">{product.brand}</p>
+                {product.description ? <p className="mt-1 line-clamp-2 text-xs text-slate-600">{product.description}</p> : null}
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                   {product.category}
                 </p>
@@ -517,8 +521,9 @@ export function AdminProductsPage() {
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-900">
-                  {product.name}
+                <td className="px-4 py-3">
+                  <p className="font-semibold text-slate-900">{product.name}</p>
+                  {product.description ? <p className="mt-1 max-w-xs text-xs text-slate-600">{product.description}</p> : null}
                 </td>
                 <td className="px-4 py-3">{product.brand}</td>
                 <td className="px-4 py-3">{product.category}</td>
@@ -583,6 +588,7 @@ export function AdminProductsPage() {
             }
             required
           />
+          <textarea className="rounded-xl border border-orange-200 px-3 py-2" placeholder="Product description" value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} rows={3} />
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-xl border border-orange-200 px-3 py-2"

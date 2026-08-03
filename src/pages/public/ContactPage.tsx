@@ -86,7 +86,7 @@ export function ContactPage() {
                       Technical support Phone Number
                     </p>
                     <p className="mt-1 text-base font-semibold text-slate-900">
-                      +251953205353
+                      +251949064949
                     </p>
                   </div>
                 </div>
@@ -133,12 +133,12 @@ export function ContactPage() {
                       TikTok
                     </p>
                     <a
-                      href={siteSettings.tiktokUrl}
+                      href="https://www.tiktok.com/@ethioprinting?_r=1&_t=ZS-98ZlToGpaAn"
                       target="_blank"
                       rel="noreferrer"
                       className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
                     >
-                      {siteSettings.tiktokUrl.replace(/^https?:\/\//, "")}
+                      @ethioprinting
                     </a>
                   </div>
                 </div>
@@ -159,6 +159,46 @@ export function ContactPage() {
                       className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
                     >
                       @DIPCOM22
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <ExternalLink className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      JIJI
+                    </p>
+                    <a
+                      href="https://jiji.com.et/sellerpage-A4QxLmdseKGp5becZqTQsiMD"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
+                    >
+                      JIJI
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-700">
+                    <ExternalLink className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Zemengebeya
+                    </p>
+                    <a
+                      href="https://zemengebeya.et/magno/render/0000000001D4DBARm4BN/zemengebeya/home.html#/home?storeId=ckLY000001V7dgsaIF7Y"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block text-base font-semibold text-slate-900 transition hover:text-orange-700"
+                    >
+                      Zemengebeya
                     </a>
                   </div>
                 </div>

@@ -211,6 +211,7 @@ type ApiProduct = {
   price: string | number;
   stock: number;
   brand: string;
+  description?: string;
   category: string;
   categoryId: string;
   imageUrl?: string;
@@ -229,6 +230,7 @@ export type ApiSellerProduct = {
   price: string | number;
   stock: number;
   brand: string;
+  description?: string;
   category: string;
   categoryId: string;
   imageUrl?: string;
@@ -340,6 +342,7 @@ function mapProduct(product: ApiProduct): Product {
     price: toNumber(product.price),
     stock: product.stock,
     brand: product.brand,
+    description: product.description ?? "",
     category: product.category,
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
@@ -360,6 +363,7 @@ export function mapSellerProduct(product: ApiSellerProduct): SellerProduct {
     price: toNumber(product.price),
     stock: product.stock,
     brand: product.brand,
+    description: product.description ?? "",
     category: product.category,
     categoryId: product.categoryId,
     imageUrl: product.imageUrl || defaultProductImage,
@@ -576,6 +580,7 @@ async function buildCatalogFormData(payload: ProductUpsertPayload) {
   data.append("price", String(payload.price));
   data.append("stock", String(payload.stock));
   data.append("brand", payload.brand);
+  data.append("description", payload.description ?? "");
   data.append("categoryId", payload.categoryId);
   if (payload.imageFile) {
     data.append("imageFile", await compressImageFile(payload.imageFile));

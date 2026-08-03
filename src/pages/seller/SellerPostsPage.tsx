@@ -18,6 +18,7 @@ const emptyForm = {
   priceInput: "",
   stockInput: "",
   brand: "",
+  description: "",
   categoryId: "",
   imageFile: null as File | null,
   condition: "new",
@@ -99,6 +100,7 @@ export function SellerPostsPage() {
       priceInput: String(product.price),
       stockInput: String(product.stock),
       brand: product.brand,
+      description: product.description ?? "",
       categoryId: product.categoryId,
       condition: (product as any).condition ?? "new",
       imageFile: null,
@@ -143,6 +145,7 @@ export function SellerPostsPage() {
       price: parsedPrice,
       stock: parsedStock,
       brand: form.brand,
+      description: form.description.trim(),
       condition: (form as any).condition ?? "new",
       categoryId: form.categoryId,
       imageFile: form.imageFile,
@@ -321,6 +324,7 @@ export function SellerPostsPage() {
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                   {product.category}
                 </p>
+                {product.description ? <p className="mt-1 whitespace-pre-line text-xs leading-5 text-slate-600">{product.description}</p> : null}
                 <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
                   <span className={`rounded-full px-2 py-1 ${product.moderationStatus === "approved" ? "bg-emerald-100 text-emerald-700" : product.moderationStatus === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
                     {moderationLabel(product.moderationStatus)}
@@ -406,7 +410,14 @@ export function SellerPostsPage() {
                     />
                   </div>
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-900">{product.name}</td>
+                <td className="px-4 py-3">
+                  <p className="font-semibold text-slate-900">{product.name}</p>
+                  {product.description ? (
+                    <p className="mt-1 max-w-xs text-xs leading-5 text-slate-600">
+                      {product.description}
+                    </p>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3 text-slate-700">{product.brand}</td>
                 <td className="px-4 py-3 text-slate-700">{product.category}</td>
                 <td className="px-4 py-3">
@@ -480,6 +491,11 @@ export function SellerPostsPage() {
               className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-orange-300"
               required
             />
+          </label>
+
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">
+            Description
+            <textarea value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Describe your post" rows={3} className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-orange-300" />
           </label>
 
           <div className="grid gap-4 md:grid-cols-2">

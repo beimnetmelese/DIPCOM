@@ -352,6 +352,11 @@ export function SellerProductsPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-slate-500">{product.category}</p>
+              {product.description ? (
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                  {product.description}
+                </p>
+              ) : null}
               <p
                 className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${product.condition === "used" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}
               >
@@ -387,14 +392,52 @@ export function SellerProductsPage() {
         onClose={closeReserveModal}
       >
         {reserveTarget ? (
-          <div>
-            <p className="text-sm text-slate-600">
-              How many units do you want to reserve?
-            </p>
-            <p className="mt-2 text-sm font-semibold text-slate-800">
-              Available stock: {reserveTarget.stock}
-            </p>
-            <div className="mt-4 grid gap-2">
+          <div className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-[150px,1fr]">
+              <div className="overflow-hidden rounded-2xl border border-orange-100 bg-orange-50">
+                <img
+                  src={reserveTarget.imageUrl}
+                  alt={reserveTarget.name}
+                  className="h-40 w-full object-cover"
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  {reserveTarget.brand} · {reserveTarget.category}
+                </p>
+                <h3 className="mt-1 font-heading text-xl font-bold text-slate-900">
+                  {reserveTarget.name}
+                </h3>
+                {reserveTarget.description ? (
+                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                    {reserveTarget.description}
+                  </p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-700">
+                    {conditionLabel(reserveTarget.condition)}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                    {reserveTarget.stock} available
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-slate-500 line-through">
+                  Base: {currency(reserveTarget.price)}
+                </p>
+                <p className="font-heading text-xl font-bold text-orange-700">
+                  Your price: {currency(reserveTarget.price * (1 - sellerDiscountPercent / 100))}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+              <p className="text-sm text-slate-600">
+                How many units do you want to reserve?
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                Available stock: {reserveTarget.stock}
+              </p>
+              <div className="mt-4 grid gap-2">
               <label
                 htmlFor="reserve-quantity"
                 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
@@ -447,6 +490,7 @@ export function SellerProductsPage() {
                 }}
                 className="w-full rounded-2xl border border-orange-200 px-3 py-2 text-sm outline-none"
               />
+              </div>
             </div>
             {reserveError ? (
               <p className="mt-3 text-sm font-semibold text-rose-600">

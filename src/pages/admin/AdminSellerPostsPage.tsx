@@ -140,6 +140,7 @@ export function AdminSellerPostsPage() {
                   <p className="text-sm text-slate-500">
                     {post.category} · {post.brand} · {post.stock} units
                   </p>
+                  {post.description ? <p className="text-sm leading-6 text-slate-700">{post.description}</p> : null}
                   <div className="flex flex-wrap gap-2 text-xs font-semibold">
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
                       Seller post
@@ -277,6 +278,7 @@ export function AdminSellerPostsPage() {
                       <p className="text-xs text-slate-500">
                         {post.category} · {post.brand} · {currency(post.price)}
                       </p>
+                      {post.description ? <p className="mt-1 max-w-md text-xs text-slate-600">{post.description}</p> : null}
                     </td>
                     <td className="px-4 py-3">
                       <span

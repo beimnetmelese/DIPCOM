@@ -17,6 +17,7 @@ const emptyForm = {
   priceInput: "",
   stockInput: "",
   brand: "",
+  description: "",
   categoryId: "",
   imageFile: null as File | null,
   condition: "new",
@@ -113,6 +114,7 @@ export function SellerStockPage() {
       priceInput: String(product.price),
       stockInput: String(product.stock),
       brand: product.brand,
+      description: product.description ?? "",
       categoryId: product.categoryId,
       condition: (product as any).condition ?? "new",
       imageFile: null,
@@ -157,6 +159,7 @@ export function SellerStockPage() {
       price: parsedPrice,
       stock: parsedStock,
       brand: form.brand,
+      description: form.description.trim(),
       condition: (form as any).condition ?? "new",
       categoryId: form.categoryId,
       imageFile: form.imageFile,
@@ -285,6 +288,7 @@ export function SellerStockPage() {
                   {product.name}
                 </p>
                 <p className="text-sm text-slate-500">{product.brand}</p>
+                {product.description ? <p className="mt-1 line-clamp-2 text-xs text-slate-600">{product.description}</p> : null}
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                   {product.category}
                 </p>
@@ -425,6 +429,7 @@ export function SellerStockPage() {
             }
             required
           />
+          <textarea className="rounded-xl border border-orange-200 px-3 py-2" placeholder="Product description" value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} rows={3} />
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-xl border border-orange-200 px-3 py-2"

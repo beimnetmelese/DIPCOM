@@ -15,6 +15,7 @@ export interface Product {
   price: number
   stock: number
   brand: string
+  description?: string
   category: string
   categoryId: string
   imageUrl?: string
@@ -40,6 +41,7 @@ export interface ProductUpsertPayload {
   price: number
   stock: number
   brand: string
+  description?: string
   category: string
   categoryId: string
   imageFile?: File | null

@@ -59,7 +59,7 @@ export function PublicFooter() {
               <span>Dipcomtech@gmail.com</span>
             </div>
             <a
-              href="https://www.tiktok.com/@dipcomtechnologies"
+              href="https://www.tiktok.com/@ethioprinting?_r=1&_t=ZS-98ZlToGpaAn"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
@@ -81,6 +81,22 @@ export function PublicFooter() {
               className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
             >
               WhatsApp <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <a
+              href="https://jiji.com.et/sellerpage-A4QxLmdseKGp5becZqTQsiMD"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
+            >
+              JIJI <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <a
+              href="https://zemengebeya.et/magno/render/0000000001D4DBARm4BN/zemengebeya/home.html#/home?storeId=ckLY000001V7dgsaIF7Y"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-orange-300 transition hover:text-white"
+            >
+              ZemenGebeya <ArrowUpRight className="h-4 w-4" />
             </a>
           </div>
         </div>
